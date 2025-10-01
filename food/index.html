@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Food Money — Monthly Subtractor</title>
 
-<!-- PWA hooks (reuse from root) -->
+<!-- PWA hooks (point to root files) -->
 <link rel="manifest" href="../manifest.webmanifest">
 <meta name="theme-color" content="#111827">
 <link rel="apple-touch-icon" href="../icons/icon-192.png">
@@ -38,7 +38,14 @@
   .right{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
   .danger{color:#b91c1c}
   .ok{color:#065f46}
+
+  /* bottom tabs */
+  .tabbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--bd);display:flex;z-index:9999}
+  .tabbar a{flex:1;text-align:center;padding:.8rem 1rem;text-decoration:none;font-weight:700;color:var(--g)}
+  .tabbar a.active{color:var(--b)}
+  .wrap{margin-bottom:84px}
 </style>
+
 <body>
   <div class="wrap">
     <h1>Food Money (Monthly)</h1>
@@ -78,6 +85,17 @@
       <div class="pill"><span class="t">Remaining</span><span class="v" id="tRemain">$0</span></div>
     </div>
   </div>
+
+  <!-- bottom tabs -->
+  <nav class="tabbar" role="navigation" aria-label="Bottom tabs">
+    <a href="/Spending-tracker/" data-tab="spending">Spending</a>
+    <a href="/Spending-tracker/food/" data-tab="food">Food</a>
+  </nav>
+  <script>
+    const onFood = location.pathname.includes('/food/');
+    const active = document.querySelector(`[data-tab="${onFood ? 'food' : 'spending'}"]`);
+    if (active) active.classList.add('active');
+  </script>
 
 <script>
   const fmt = v => new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD'}).format(Number(v||0));
@@ -163,3 +181,4 @@
 </script>
 </body>
 </html>
+
