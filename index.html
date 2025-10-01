@@ -3,6 +3,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Spending Money — Monthly Subtractor</title>
+
+<!-- PWA hooks -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#111827">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<script>
+  // Register service worker for offline
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(console.error);
+  }
+</script>
+
 <style>
   :root{--b:#111827;--g:#6b7280;--bd:#e5e7eb;--bg:#f9fafb}
   body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);margin:0}
@@ -115,4 +127,39 @@
     render();
   }
 
-  fun
+  function del(idx){ state.items.splice(idx,1); render(); }
+  function setBudget(){ state.budget = Number(budget.value||0); render(); }
+
+  function resetAll(){
+    if (!confirm('Reset this month? This clears entries and budget.')) return;
+    state.budget = 0; state.items = [];
+    render();
+  }
+
+  function copySummary(){
+    const spent = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
+    const remain = (Number(state.budget||0) - spent);
+    const lines = [
+      `Spending Money (Monthly)`,
+      `Budget: ${fmt(state.budget)}`,
+      `Spent:  ${fmt(spent)}`,
+      `Remaining: ${fmt(remain)}`,
+      ``,
+      `Entries:`,
+      ...(state.items.length ? state.items.map(i=>`- ${i.date} · ${i.desc}: ${fmt(i.amount)}`) : ['(none)'])
+    ].join('\n');
+    navigator.clipboard.writeText(lines).then(()=>alert('Summary copied.'));
+  }
+
+  window.del = del;
+
+  document.getElementById('add').addEventListener('click', add);
+  document.getElementById('reset').addEventListener('click', resetAll);
+  document.getElementById('copy').addEventListener('click', copySummary);
+  budget.addEventListener('change', setBudget);
+  budget.addEventListener('keyup', e=>{ if(e.key==='Enter') setBudget(); });
+
+  render();
+</script>
+</body>
+</html>
