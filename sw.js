@@ -1,6 +1,6 @@
 // One app, two pages cached offline
-const VERSION = 'v15';
-const ROOT = '/Spending-tracker/';   // include trailing slash, capital S
+const VERSION = 'v18';                 // <= bump this
+const ROOT = '/Spending-tracker/';
 
 const ASSETS = [
   ROOT,
