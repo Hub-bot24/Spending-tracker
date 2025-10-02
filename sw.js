@@ -1,5 +1,5 @@
 // One app, two pages cached offline
-const VERSION = 'v18';                 // <= bump this
+const VERSION = 'v21';                 // <= bump this
 const ROOT = '/Spending-tracker/';
 
 const ASSETS = [
