@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spending Money — Monthly Subtractor</title>
+
+<!-- PWA hooks (root paths) -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#111827">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(console.error);
+  }
+</script>
+
+<style>
+  :root{--b:#111827;--g:#6b7280;--bd:#e5e7eb;--bg:#f9fafb}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);margin:0}
+  .wrap{max-width:760px;margin:32px auto;padding:0 16px}
+  .card{background:#fff;border:1px solid var(--bd);border-radius:16px;padding:16px 16px 12px;box-shadow:0 1px 2px rgba(0,0,0,.05);margin:12px 0}
+  h1{font-size:clamp(20px,3.2vw,28px);margin:6px 0 4px;color:var(--b)}
+  .muted{color:var(--g)}
+  label{display:block;margin:.5rem 0 .25rem;color:var(--b);font-weight:600}
+  input{width:100%;padding:.65rem .75rem;border:1px solid var(--bd);border-radius:12px;font-size:16px}
+  .row{display:grid;grid-template-columns:1fr 140px 110px;gap:10px;align-items:end}
+  .btn{background:var(--b);color:#fff;border:0;border-radius:12px;padding:.65rem .9rem;cursor:pointer}
+  .btn.secondary{background:#fff;color:var(--b);border:1px solid var(--bd)}
+  .btn.small{padding:.45rem .6rem;border-radius:10px}
+  table{width:100%;border-collapse:separate;border-spacing:0;margin-top:8px}
+  th,td{padding:10px;border-bottom:1px solid var(--bd);text-align:left}
+  th{font-size:13px;color:var(--g);font-weight:600}
+  td:last-child{text-align:right}
+  .totals{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .pill{display:flex;flex-direction:column;gap:6px;border:1px solid var(--bd);border-radius:14px;padding:12px;background:#fff}
+  .pill .t{font-size:12px;color:var(--g)}
+  .pill .v{font-size:18px;font-weight:700}
+  .right{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+  .danger{color:#b91c1c}
+  .ok{color:#065f46}
+  /* bottom tabs */
+  .tabbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--bd);display:flex;z-index:9999}
+  .tabbar a{flex:1;text-align:center;padding:.8rem 1rem;text-decoration:none;font-weight:700;color:var(--g)}
+  .tabbar a.active{color:var(--b)}
+  .wrap{margin-bottom:84px}
+</style>
+
+<body>
+  <div class="wrap">
+    <h1>Spending Money (Monthly)</h1>
+    <p class="muted">Enter your monthly spending amount at the top, then add expenses below. Saved locally and works offline.</p>
+
+    <div class="card">
+      <label for="budget">Monthly spending money (AUD)</label>
+      <input id="budget" type="number" min="0" step="0.01" placeholder="e.g. 1200">
+      <div class="right" style="margin-top:10px">
+        <button class="btn small secondary" id="reset">Reset month</button>
+        <button class="btn small secondary" id="copy">Copy summary</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <div>
+          <label for="desc">Entry</label>
+          <input id="desc" placeholder="e.g. Groceries">
+        </div>
+        <div>
+          <label for="amt">Amount (AUD)</label>
+          <input id="amt" type="number" step="0.01" min="0" placeholder="e.g. 75.50">
+        </div>
+        <button class="btn" id="add">Add</button>
+      </div>
+
+      <table id="tbl">
+        <thead><tr><th>Date</th><th>Entry</th><th>Amount</th></tr></thead>
+        <tbody id="rows"><tr><td colspan="3" class="muted">No entries yet.</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="totals">
+      <div class="pill"><span class="t">Budget (month)</span><span class="v" id="tBudget">$0</span></div>
+      <div class="pill"><span class="t">Spent</span><span class="v" id="tSpent">$0</span></div>
+      <div class="pill"><span class="t">Remaining</span><span class="v" id="tRemain">$0</span></div>
+    </div>
+  </div>
+
+  <!-- bottom tabs -->
+  <nav class="tabbar" role="navigation" aria-label="Bottom tabs">
+    <a href="/Spending-tracker/" data-tab="spending">Spending</a>
+    <a href="/Spending-tracker/food/" data-tab="food">Food</a>
+  </nav>
+  <script>
+    const onFood = location.pathname.includes('/food/');
+    const active = document.querySelector(`[data-tab="${onFood ? 'food' : 'spending'}"]`);
+    if (active) active.classList.add('active');
+  </script>
+
+<script>
+  const fmt = v => new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD'}).format(Number(v||0));
+  const today = () => new Date().toISOString().slice(0,10);
+  const KEY="spend.monthly.v1";
+  const state = JSON.parse(localStorage.getItem(KEY) || '{"budget":0,"items":[]}');
+  const el = (id)=>document.getElementById(id);
+  const budget = el('budget'), rows = el('rows'), tBudget = el('tBudget'), tSpent = el('tSpent'), tRemain = el('tRemain');
+  const desc = el('desc'), amt = el('amt');
+
+  function render(){
+    const spent = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
+    const remain = (Number(state.budget||0) - spent);
+    rows.innerHTML = state.items.length
+      ? state.items.map((i,idx)=>`
+        <tr><td>${i.date}</td><td>${i.desc}</td>
+        <td>${fmt(i.amount)} <button class="btn small secondary" onclick="del(${idx})">✕</button></td></tr>`).join('')
+      : `<tr><td colspan="3" class="muted">No entries yet.</td></tr>`;
+    tBudget.textContent = fmt(state.budget);
+    tSpent.textContent = fmt(spent);
+    tRemain.textContent = fmt(remain);
+    tRemain.classList.toggle('danger', remain < 0);
+    tRemain.classList.toggle('ok', remain >= 0);
+    budget.value = state.budget || '';
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }
+  function add(){ const d=(desc.value||'').trim(); const a=Number(amt.value||0);
+    if(!d||!(a>0))return; state.items.unshift({date:today(),desc:d,amount:a}); desc.value=''; amt.value=''; render(); }
+  function del(i){ state.items.splice(i,1); render(); }
+  function setBudget(){ state.budget = Number(budget.value||0); render(); }
+  function resetAll(){ if(!confirm('Reset this month?'))return; state.budget=0; state.items=[]; render(); }
+  function copySummary(){
+    const spent = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
+    const remain = (Number(state.budget||0) - spent);
+    const lines = [`Spending Money (Monthly)`,`Budget: ${fmt(state.budget)}`,`Spent:  ${fmt(spent)}`,`Remaining: ${fmt(remain)}`,'',`Entries:`,
+      ...(state.items.length ? state.items.map(i=>`- ${i.date} · ${i.desc}: ${fmt(i.amount)}`) : ['(none)'])].join('\n');
+    navigator.clipboard.writeText(lines).then(()=>alert('Summary copied.'));
+  }
+  window.del = del;
+  document.getElementById('add').addEventListener('click', add);
+  document.getElementById('reset').addEventListener('click', resetAll);
+  document.getElementById('copy').addEventListener('click', copySummary);
+  budget.addEventListener('change', setBudget);
+  budget.addEventListener('keyup', e=>{ if(e.key==='Enter') setBudget(); });
+  render();
+</script>
+</body>
+</html>
