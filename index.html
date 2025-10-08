@@ -4,7 +4,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Savings — Account & Goal</title>
 
-<!-- PWA hooks (point to root files) -->
 <link rel="manifest" href="../manifest.webmanifest">
 <meta name="theme-color" content="#111827">
 <link rel="apple-touch-icon" href="../icons/icon-192.png">
@@ -39,7 +38,7 @@
   .right{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
   .danger{color:#b91c1c}
   .ok{color:#065f46}
-  /* bottom tabs */
+
   .tabbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--bd);display:flex;z-index:9999}
   .tabbar a{flex:1;text-align:center;padding:.8rem 1rem;text-decoration:none;font-weight:700;color:var(--g)}
   .tabbar a.active{color:var(--b)}
@@ -49,9 +48,8 @@
 <body>
   <div class="wrap">
     <h1>Savings — Account & Goal</h1>
-    <p class="muted">Set how much you want to save and how much you already have. Add deposits over time. Saved locally; works offline.</p>
+    <p class="muted">Set a savings goal and your current saved balance. Add deposits; Remaining updates automatically. Works offline.</p>
 
-    <!-- Account + Goal -->
     <div class="card">
       <div class="row2">
         <div>
@@ -69,7 +67,6 @@
       </div>
     </div>
 
-    <!-- Deposits -->
     <div class="card">
       <div class="row">
         <div>
@@ -89,7 +86,6 @@
       </table>
     </div>
 
-    <!-- Totals -->
     <div class="totals">
       <div class="pill"><span class="t">Goal</span><span class="v" id="tGoal">$0</span></div>
       <div class="pill"><span class="t">Saved (current + deposits)</span><span class="v" id="tSaved">$0</span></div>
@@ -97,27 +93,20 @@
     </div>
   </div>
 
-  <!-- bottom tabs (3 tabs) -->
   <nav class="tabbar" role="navigation" aria-label="Bottom tabs">
     <a href="/Spending-tracker/" data-tab="spending">Spending</a>
     <a href="/Spending-tracker/food/" data-tab="food">Food</a>
-    <a href="/Spending-tracker/savings/" data-tab="savings">Savings</a>
+    <a href="/Spending-tracker/savings/" data-tab="savings" class="active">Savings</a>
   </nav>
-  <script>
-    const path = location.pathname;
-    const activeTab = path.includes('/savings/') ? 'savings' : (path.includes('/food/') ? 'food' : 'spending');
-    const a = document.querySelector(`[data-tab="${activeTab}"]`); if (a) a.classList.add('active');
-  </script>
 
 <script>
   const fmt = v => new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD'}).format(Number(v||0));
   const today = () => new Date().toISOString().slice(0,10);
 
-  // Savings state now includes: goal, current, items (deposits)
   const KEY="savings.account.v1";
   const state = JSON.parse(localStorage.getItem(KEY) || '{"goal":0,"current":0,"items":[]}');
 
-  const $ = (id)=>document.getElementById(id);
+  const $ = id => document.getElementById(id);
   const goal = $('goal'), current = $('current'), rows = $('rows'),
         tGoal = $('tGoal'), tSaved = $('tSaved'), tRemain = $('tRemain'),
         desc = $('desc'), amt = $('amt');
@@ -159,18 +148,13 @@
     desc.value=''; amt.value='';
     render();
   }
-
   function del(idx){ state.items.splice(idx,1); render(); }
-
   function setGoal(){ state.goal = Number(goal.value||0); render(); }
   function setCurrent(){ state.current = Number(current.value||0); render(); }
-
   function resetAll(){
     if (!confirm('Reset savings account? This clears goal, current saved, and deposits.')) return;
-    state.goal = 0; state.current = 0; state.items = [];
-    render();
+    state.goal = 0; state.current = 0; state.items = []; render();
   }
-
   function copySummary(){
     const deposits = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
     const saved = Number(state.current||0) + deposits;
@@ -182,14 +166,13 @@
       `Deposits total: ${fmt(deposits)}`,
       `Saved (current + deposits): ${fmt(saved)}`,
       `Remaining to goal: ${fmt(remain)}`,
-      ``,
-      `Deposits:`,
+      '',
+      'Deposits:',
       ...(state.items.length ? state.items.map(i=>`- ${i.date} · ${i.desc}: ${fmt(i.amount)}`) : ['(none)'])
     ].join('\n');
     navigator.clipboard.writeText(lines).then(()=>alert('Summary copied.'));
   }
 
-  // expose delete + wire buttons
   window.del = del;
   document.getElementById('add').addEventListener('click', add);
   document.getElementById('reset').addEventListener('click', resetAll);
@@ -203,3 +186,4 @@
 </script>
 </body>
 </html>
+
