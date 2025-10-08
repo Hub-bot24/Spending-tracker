@@ -1,4 +1,4 @@
-const VERSION = 'v28';               // bump this
+const VERSION = 'v31';               // bump this
 const ROOT = '/Spending-tracker/';
 const ASSETS = [
   ROOT,
