@@ -21,14 +21,15 @@
   h1{font-size:clamp(20px,3.2vw,28px);margin:6px 0 4px;color:var(--b)}
   .muted{color:var(--g)}
   label{display:block;margin:.5rem 0 .25rem;color:var(--b);font-weight:600}
-  input{width:100%;padding:.65rem .75rem;border:1px solid var(--bd);border-radius:12px;font-size:16px}
-  .row{display:grid;grid-template-columns:1fr 140px 110px;gap:10px;align-items:end}
+  input, select{width:100%;padding:.65rem .75rem;border:1px solid var(--bd);border-radius:12px;font-size:16px;background:#fff}
+  /* row now has an extra column for Type */
+  .row{display:grid;grid-template-columns:1fr 120px 130px 110px;gap:10px;align-items:end}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .btn{background:var(--b);color:#fff;border:0;border-radius:12px;padding:.65rem .9rem;cursor:pointer}
   .btn.secondary{background:#fff;color:var(--b);border:1px solid var(--bd)}
   .btn.small{padding:.45rem .6rem;border-radius:10px}
   table{width:100%;border-collapse:separate;border-spacing:0;margin-top:8px}
-  th,td{padding:10px;border-bottom:1px solid var(--bd);text-align:left}
+  th,td{padding:10px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:middle}
   th{font-size:13px;color:var(--g);font-weight:600}
   td:last-child{text-align:right}
   .totals{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
@@ -38,6 +39,11 @@
   .right{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
   .danger{color:#b91c1c}
   .ok{color:#065f46}
+  .badge{display:inline-block;font-size:12px;padding:.2rem .45rem;border-radius:999px;border:1px solid var(--bd);margin-right:6px;color:var(--g)}
+  .neg{color:#b91c1c}
+  .pos{color:#065f46}
+
+  /* bottom tabs */
   .tabbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--bd);display:flex;z-index:9999}
   .tabbar a{flex:1;text-align:center;padding:.8rem 1rem;text-decoration:none;font-weight:700;color:var(--g)}
   .tabbar a.active{color:var(--b)}
@@ -47,8 +53,9 @@
 <body>
   <div class="wrap">
     <h1>Savings — Account & Goal</h1>
-    <p class="muted">Set a savings goal and your current saved balance. Add deposits; Remaining updates automatically. Works offline.</p>
+    <p class="muted">Set a goal and your current saved balance. Add <b>Deposits (+)</b> or <b>Withdrawals (−)</b>. Remaining updates automatically. Works offline.</p>
 
+    <!-- Account + Goal -->
     <div class="card">
       <div class="row2">
         <div>
@@ -66,32 +73,42 @@
       </div>
     </div>
 
+    <!-- Transactions (Deposit/Withdraw) -->
     <div class="card">
       <div class="row">
         <div>
-          <label for="desc">Deposit note</label>
-          <input id="desc" placeholder="e.g. Paycheck / Transfer">
+          <label for="desc">Note</label>
+          <input id="desc" placeholder="e.g. Paycheck / Transfer / ATM">
         </div>
         <div>
           <label for="amt">Amount (AUD)</label>
-          <input id="amt" type="number" step="0.01" min="0" placeholder="e.g. 50.00">
+          <input id="amt" type="number" step="0.01" min="0" placeholder="50.00">
+        </div>
+        <div>
+          <label for="kind">Type</label>
+          <select id="kind">
+            <option value="deposit">Deposit (+)</option>
+            <option value="withdraw">Withdraw (−)</option>
+          </select>
         </div>
         <button class="btn" id="add">Add</button>
       </div>
 
       <table>
-        <thead><tr><th>Date</th><th>Deposit</th><th>Amount</th></tr></thead>
-        <tbody id="rows"><tr><td colspan="3" class="muted">No deposits yet.</td></tr></tbody>
+        <thead><tr><th>Date</th><th>Note</th><th>Amount</th></tr></thead>
+        <tbody id="rows"><tr><td colspan="3" class="muted">No transactions yet.</td></tr></tbody>
       </table>
     </div>
 
+    <!-- Totals -->
     <div class="totals">
       <div class="pill"><span class="t">Goal</span><span class="v" id="tGoal">$0</span></div>
-      <div class="pill"><span class="t">Saved (current + deposits)</span><span class="v" id="tSaved">$0</span></div>
+      <div class="pill"><span class="t">Saved (current + deposits − withdrawals)</span><span class="v" id="tSaved">$0</span></div>
       <div class="pill"><span class="t">Remaining to goal</span><span class="v" id="tRemain">$0</span></div>
     </div>
   </div>
 
+  <!-- bottom tabs -->
   <nav class="tabbar" role="navigation" aria-label="Bottom tabs">
     <a href="/Spending-tracker/" data-tab="spending">Spending</a>
     <a href="/Spending-tracker/food/" data-tab="food">Food</a>
@@ -102,30 +119,36 @@
   const fmt = v => new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD'}).format(Number(v||0));
   const today = () => new Date().toISOString().slice(0,10);
 
-  const KEY="savings.account.v1";
+  // State: goal, current balance, items with signed amount (+ deposit, − withdraw)
+  const KEY="savings.account.v2";
   const state = JSON.parse(localStorage.getItem(KEY) || '{"goal":0,"current":0,"items":[]}');
 
   const $ = id => document.getElementById(id);
   const goal = $('goal'), current = $('current'), rows = $('rows'),
         tGoal = $('tGoal'), tSaved = $('tSaved'), tRemain = $('tRemain'),
-        desc = $('desc'), amt = $('amt');
+        desc = $('desc'), amt = $('amt'), kind = $('kind');
 
   function render(){
-    const deposits = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
-    const saved = Number(state.current||0) + deposits;
+    const totalSigned = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
+    const saved = Number(state.current||0) + totalSigned;        // includes negatives for withdrawals
     const remain = Number(state.goal||0) - saved;
 
     rows.innerHTML = state.items.length
-      ? state.items.map((i,idx)=>`
-        <tr>
-          <td>${i.date}</td>
-          <td>${i.desc}</td>
-          <td>
-            ${fmt(i.amount)}
-            <button class="btn small secondary" onclick="del(${idx})" title="Remove">✕</button>
-          </td>
-        </tr>`).join('')
-      : `<tr><td colspan="3" class="muted">No deposits yet.</td></tr>`;
+      ? state.items.map((i,idx)=>{
+          const isNeg = Number(i.amount) < 0;
+          const label = isNeg ? 'Withdraw' : 'Deposit';
+          const shown = fmt(Math.abs(i.amount));
+          return `
+            <tr>
+              <td>${i.date}</td>
+              <td><span class="badge">${label}</span>${i.desc}</td>
+              <td class="${isNeg?'neg':'pos'}">
+                ${isNeg?'-':''}${shown}
+                <button class="btn small secondary" onclick="del(${idx})" title="Remove">✕</button>
+              </td>
+            </tr>`;
+        }).join('')
+      : `<tr><td colspan="3" class="muted">No transactions yet.</td></tr>`;
 
     tGoal.textContent = fmt(state.goal);
     tSaved.textContent = fmt(saved);
@@ -143,31 +166,43 @@
     const d = (desc.value||'').trim();
     const a = Number(amt.value||0);
     if (!d || !(a>0)) return;
-    state.items.unshift({date: today(), desc: d, amount: a});
-    desc.value=''; amt.value='';
+
+    const sign = (kind.value === 'withdraw') ? -1 : 1;
+    state.items.unshift({date: today(), desc: d, amount: sign * a});
+
+    desc.value=''; amt.value=''; kind.value='deposit';
     render();
   }
+
   function del(idx){ state.items.splice(idx,1); render(); }
   function setGoal(){ state.goal = Number(goal.value||0); render(); }
   function setCurrent(){ state.current = Number(current.value||0); render(); }
+
   function resetAll(){
-    if (!confirm('Reset savings account? This clears goal, current saved, and deposits.')) return;
+    if (!confirm('Reset savings account? This clears goal, current saved, and transactions.')) return;
     state.goal = 0; state.current = 0; state.items = []; render();
   }
+
   function copySummary(){
-    const deposits = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
-    const saved = Number(state.current||0) + deposits;
+    const totalSigned = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
+    const saved = Number(state.current||0) + totalSigned;
     const remain = Number(state.goal||0) - saved;
     const lines = [
       `Savings — Account & Goal`,
       `Goal: ${fmt(state.goal)}`,
       `Current saved: ${fmt(state.current)}`,
-      `Deposits total: ${fmt(deposits)}`,
-      `Saved (current + deposits): ${fmt(saved)}`,
+      `Transactions total (signed): ${fmt(totalSigned)}`,
+      `Saved (current + signed): ${fmt(saved)}`,
       `Remaining to goal: ${fmt(remain)}`,
       '',
-      'Deposits:',
-      ...(state.items.length ? state.items.map(i=>`- ${i.date} · ${i.desc}: ${fmt(i.amount)}`) : ['(none)'])
+      'Transactions:',
+      ...(state.items.length
+        ? state.items.map(i=>{
+            const isNeg = Number(i.amount) < 0;
+            const label = isNeg ? 'Withdraw' : 'Deposit';
+            return `- ${i.date} · ${label} · ${i.desc}: ${isNeg?'-':''}${fmt(Math.abs(i.amount))}`;
+          })
+        : ['(none)'])
     ].join('\n');
     navigator.clipboard.writeText(lines).then(()=>alert('Summary copied.'));
   }
