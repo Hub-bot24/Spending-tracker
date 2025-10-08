@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="en">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Savings — Account & Goal</title>
 
-<link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#111827">
-<link rel="apple-touch-icon" href="../icons/icon-192.png">
+<link rel="manifest" href="../manifest.webmanifest" />
+<meta name="theme-color" content="#0f172a" />
+<link rel="apple-touch-icon" href="../icons/icon-192.png" />
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('../sw.js').catch(console.error);
@@ -14,75 +14,68 @@
 </script>
 
 <style>
-  :root{--b:#111827;--g:#6b7280;--bd:#e5e7eb;--bg:#f9fafb}
-  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);margin:0}
-  .wrap{max-width:760px;margin:32px auto;padding:0 16px}
-  .card{background:#fff;border:1px solid var(--bd);border-radius:16px;padding:16px 16px 12px;box-shadow:0 1px 2px rgba(0,0,0,.05);margin:12px 0}
-  h1{font-size:clamp(20px,3.2vw,28px);margin:6px 0 4px;color:var(--b)}
-  .muted{color:var(--g)}
-  label{display:block;margin:.5rem 0 .25rem;color:var(--b);font-weight:600}
-  input, select{width:100%;padding:.65rem .75rem;border:1px solid var(--bd);border-radius:12px;font-size:16px;background:#fff}
-  /* row now has an extra column for Type */
-  .row{display:grid;grid-template-columns:1fr 120px 130px 110px;gap:10px;align-items:end}
+  :root{--ink:#0f172a;--ink-2:#334155;--muted:#64748b;--line:#e5e7eb;--bg:#f8fafc;--card:#fff;--brand:#2563eb;--ok:#0f766e;--warn:#b91c1c}
+  *{box-sizing:border-box}html,body{margin:0}
+  body{font:400 16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  .appbar{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#0f172a 0%,#111827 100%);color:#fff}
+  .appbar .inner{max-width:900px;margin:0 auto;padding:14px 16px 12px}
+  .appbar h1{margin:0;font-size:20px;font-weight:700}.appbar p{margin:4px 0 0;color:#cbd5e1;font-size:13px}
+  .wrap{max-width:900px;margin:16px auto 0;padding:0 16px 100px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 10px 20px rgba(2,8,23,.04);margin:12px 0}
+  label{display:block;margin:.35rem 0 .35rem;font-weight:600;color:#334155}
+  input,select{width:100%;padding:.7rem .8rem;border:1px solid var(--line);border-radius:12px;font-size:16px;background:#fff}
+  .row{display:grid;grid-template-columns:1.4fr 140px 140px 118px;gap:10px;align-items:end}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .btn{background:var(--b);color:#fff;border:0;border-radius:12px;padding:.65rem .9rem;cursor:pointer}
-  .btn.secondary{background:#fff;color:var(--b);border:1px solid var(--bd)}
-  .btn.small{padding:.45rem .6rem;border-radius:10px}
-  table{width:100%;border-collapse:separate;border-spacing:0;margin-top:8px}
-  th,td{padding:10px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:middle}
-  th{font-size:13px;color:var(--g);font-weight:600}
+  .btn{background:#2563eb;color:#fff;border:0;border-radius:12px;padding:.7rem .95rem;font-weight:700;cursor:pointer}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line)} .btn.small{padding:.45rem .65rem;border-radius:10px}
+  .right{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:10px}
+  table{width:100%;border-collapse:separate;border-spacing:0;margin-top:6px}
+  th,td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+  th{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em}
   td:last-child{text-align:right}
-  .totals{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-  .pill{display:flex;flex-direction:column;gap:6px;border:1px solid var(--bd);border-radius:14px;padding:12px;background:#fff}
-  .pill .t{font-size:12px;color:var(--g)}
-  .pill .v{font-size:18px;font-weight:700}
-  .right{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
-  .danger{color:#b91c1c}
-  .ok{color:#065f46}
-  .badge{display:inline-block;font-size:12px;padding:.2rem .45rem;border-radius:999px;border:1px solid var(--bd);margin-right:6px;color:var(--g)}
-  .neg{color:#b91c1c}
-  .pos{color:#065f46}
-
-  /* bottom tabs */
-  .tabbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--bd);display:flex;z-index:9999}
-  .tabbar a{flex:1;text-align:center;padding:.8rem 1rem;text-decoration:none;font-weight:700;color:var(--g)}
-  .tabbar a.active{color:var(--b)}
-  .wrap{margin-bottom:84px}
+  .neg{color:#b91c1c}.pos{color:#0f766e}.badge{display:inline-block;font-size:12px;padding:.15rem .45rem;border-radius:999px;border:1px solid var(--line);margin-right:6px;color:#64748b}
+  .pills{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+  .pill{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .pill .t{font:600 12px/1 var(--font);color:#64748b}.pill .v{margin-top:6px;font:800 20px/1 var(--font)}
+  .tabs{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.92);backdrop-filter:saturate(180%) blur(10px);border-top:1px solid var(--line);display:flex;gap:8px;padding:8px env(safe-area-inset-right) calc(8px + env(safe-area-inset-bottom)) env(safe-area-inset-left);z-index:1000}
+  .tabs a{flex:1;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;padding:10px 6px;border-radius:12px;color:#6b7280;text-decoration:none;font:600 12px/1.1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  .tabs a.active{color:#0f172a;background:#f3f4f6} .tabs svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2}
+  body{padding-bottom:90px}
 </style>
 
 <body>
-  <div class="wrap">
-    <h1>Savings — Account & Goal</h1>
-    <p class="muted">Set a goal and your current saved balance. Add <b>Deposits (+)</b> or <b>Withdrawals (−)</b>. Remaining updates automatically. Works offline.</p>
+  <header class="appbar"><div class="inner">
+    <h1>Savings</h1>
+    <p>Set a goal & current balance. Add <b>Deposits (+)</b> or <b>Withdrawals (−)</b>. Remaining updates automatically.</p>
+  </div></header>
 
-    <!-- Account + Goal -->
-    <div class="card">
+  <main class="wrap">
+    <section class="card">
       <div class="row2">
         <div>
           <label for="goal">Savings goal (AUD)</label>
-          <input id="goal" type="number" min="0" step="0.01" placeholder="e.g. 2000">
+          <input id="goal" type="number" step="0.01" min="0" placeholder="e.g. 2000" />
         </div>
         <div>
           <label for="current">Current saved balance (AUD)</label>
-          <input id="current" type="number" min="0" step="0.01" placeholder="e.g. 350">
+          <input id="current" type="number" step="0.01" min="0" placeholder="e.g. 350" />
         </div>
       </div>
-      <div class="right" style="margin-top:10px">
+      <div class="right">
         <button class="btn small secondary" id="reset">Reset</button>
         <button class="btn small secondary" id="copy">Copy summary</button>
       </div>
-    </div>
+    </section>
 
-    <!-- Transactions (Deposit/Withdraw) -->
-    <div class="card">
+    <section class="card">
       <div class="row">
         <div>
           <label for="desc">Note</label>
-          <input id="desc" placeholder="e.g. Paycheck / Transfer / ATM">
+          <input id="desc" placeholder="e.g. Paycheck / Transfer / ATM" />
         </div>
         <div>
           <label for="amt">Amount (AUD)</label>
-          <input id="amt" type="number" step="0.01" min="0" placeholder="50.00">
+          <input id="amt" type="number" step="0.01" min="0" placeholder="50.00" />
         </div>
         <div>
           <label for="kind">Type</label>
@@ -98,124 +91,89 @@
         <thead><tr><th>Date</th><th>Note</th><th>Amount</th></tr></thead>
         <tbody id="rows"><tr><td colspan="3" class="muted">No transactions yet.</td></tr></tbody>
       </table>
-    </div>
+    </section>
 
-    <!-- Totals -->
-    <div class="totals">
-      <div class="pill"><span class="t">Goal</span><span class="v" id="tGoal">$0</span></div>
-      <div class="pill"><span class="t">Saved (current + deposits − withdrawals)</span><span class="v" id="tSaved">$0</span></div>
-      <div class="pill"><span class="t">Remaining to goal</span><span class="v" id="tRemain">$0</span></div>
-    </div>
-  </div>
+    <section class="pills">
+      <div class="pill"><div class="t">Goal</div><div class="v" id="tGoal">$0</div></div>
+      <div class="pill"><div class="t">Saved (current + signed)</div><div class="v" id="tSaved">$0</div></div>
+      <div class="pill"><div class="t">Remaining</div><div class="v" id="tRemain">$0</div></div>
+    </section>
+  </main>
 
-  <!-- bottom tabs -->
-  <nav class="tabbar" role="navigation" aria-label="Bottom tabs">
-    <a href="/Spending-tracker/" data-tab="spending">Spending</a>
-    <a href="/Spending-tracker/food/" data-tab="food">Food</a>
-    <a href="/Spending-tracker/savings/" data-tab="savings" class="active">Savings</a>
+  <nav class="tabs" role="navigation" aria-label="Bottom tabs">
+    <a href="/Spending-tracker/" data-tab="spending">
+      <svg viewBox="0 0 24 24"><path d="M3 7h18a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><path d="M1 11h22"/></svg>
+      <span>Spending</span>
+    </a>
+    <a href="/Spending-tracker/food/" data-tab="food">
+      <svg viewBox="0 0 24 24"><path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v7M14 3v18M19 3l-2 6 3 12"/></svg>
+      <span>Food</span>
+    </a>
+    <a href="/Spending-tracker/savings/" data-tab="savings" class="active">
+      <svg viewBox="0 0 24 24"><path d="M5 11a7 7 0 0 1 7-6h2a7 7 0 0 1 7 7v3a2 2 0 0 1-2 2h-2l-1 2H8l-1-2H5a2 2 0 0 1-2-2v-3l2-1Z"/><path d="M13 9h1"/></svg>
+      <span>Savings</span>
+    </a>
   </nav>
 
 <script>
   const fmt = v => new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD'}).format(Number(v||0));
   const today = () => new Date().toISOString().slice(0,10);
 
-  // State: goal, current balance, items with signed amount (+ deposit, − withdraw)
-  const KEY="savings.account.v2";
+  const KEY='savings.account.v3';
   const state = JSON.parse(localStorage.getItem(KEY) || '{"goal":0,"current":0,"items":[]}');
 
-  const $ = id => document.getElementById(id);
-  const goal = $('goal'), current = $('current'), rows = $('rows'),
-        tGoal = $('tGoal'), tSaved = $('tSaved'), tRemain = $('tRemain'),
-        desc = $('desc'), amt = $('amt'), kind = $('kind');
+  const $=id=>document.getElementById(id);
+  const goal=$('goal'), current=$('current'), desc=$('desc'), amt=$('amt'), kind=$('kind'), rows=$('rows'), tGoal=$('tGoal'), tSaved=$('tSaved'), tRemain=$('tRemain');
 
   function render(){
-    const totalSigned = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
-    const saved = Number(state.current||0) + totalSigned;        // includes negatives for withdrawals
+    const signedTotal = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
+    const saved = Number(state.current||0) + signedTotal;
     const remain = Number(state.goal||0) - saved;
 
     rows.innerHTML = state.items.length
       ? state.items.map((i,idx)=>{
-          const isNeg = Number(i.amount) < 0;
-          const label = isNeg ? 'Withdraw' : 'Deposit';
+          const neg = Number(i.amount)<0;
+          const label = neg?'Withdraw':'Deposit';
           const shown = fmt(Math.abs(i.amount));
-          return `
-            <tr>
-              <td>${i.date}</td>
-              <td><span class="badge">${label}</span>${i.desc}</td>
-              <td class="${isNeg?'neg':'pos'}">
-                ${isNeg?'-':''}${shown}
-                <button class="btn small secondary" onclick="del(${idx})" title="Remove">✕</button>
-              </td>
-            </tr>`;
+          return `<tr><td>${i.date}</td><td><span class="badge">${label}</span>${i.desc}</td>
+                  <td class="${neg?'neg':'pos'}">${neg?'-':''}${shown} <button class="btn small secondary" onclick="del(${idx})">✕</button></td></tr>`;
         }).join('')
       : `<tr><td colspan="3" class="muted">No transactions yet.</td></tr>`;
 
-    tGoal.textContent = fmt(state.goal);
-    tSaved.textContent = fmt(saved);
-    tRemain.textContent = fmt(remain);
+    tGoal.textContent=fmt(state.goal);
+    tSaved.textContent=fmt(saved);
+    tRemain.textContent=fmt(remain);
+    tRemain.className='v '+(remain>=0?'ok':'warn');
 
-    tRemain.classList.toggle('danger', remain < 0);
-    tRemain.classList.toggle('ok', remain >= 0);
-
-    goal.value = state.goal || '';
-    current.value = state.current || '';
+    goal.value=state.goal||''; current.value=state.current||'';
     localStorage.setItem(KEY, JSON.stringify(state));
   }
 
   function add(){
-    const d = (desc.value||'').trim();
-    const a = Number(amt.value||0);
-    if (!d || !(a>0)) return;
-
-    const sign = (kind.value === 'withdraw') ? -1 : 1;
-    state.items.unshift({date: today(), desc: d, amount: sign * a});
-
-    desc.value=''; amt.value=''; kind.value='deposit';
-    render();
+    const d=(desc.value||'').trim(), a=Number(amt.value||0);
+    if(!d || !(a>0)) return;
+    const sign = (kind.value==='withdraw') ? -1 : 1;
+    state.items.unshift({date:today(), desc:d, amount: sign*a});
+    desc.value=''; amt.value=''; kind.value='deposit'; render();
   }
-
-  function del(idx){ state.items.splice(idx,1); render(); }
-  function setGoal(){ state.goal = Number(goal.value||0); render(); }
-  function setCurrent(){ state.current = Number(current.value||0); render(); }
-
-  function resetAll(){
-    if (!confirm('Reset savings account? This clears goal, current saved, and transactions.')) return;
-    state.goal = 0; state.current = 0; state.items = []; render();
-  }
-
+  function del(i){state.items.splice(i,1);render();}
+  function setGoal(){state.goal=Number(goal.value||0);render();}
+  function setCurrent(){state.current=Number(current.value||0);render();}
+  function resetAll(){if(!confirm('Reset savings account?'))return;state.goal=0;state.current=0;state.items=[];render();}
   function copySummary(){
-    const totalSigned = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
-    const saved = Number(state.current||0) + totalSigned;
-    const remain = Number(state.goal||0) - saved;
-    const lines = [
-      `Savings — Account & Goal`,
-      `Goal: ${fmt(state.goal)}`,
-      `Current saved: ${fmt(state.current)}`,
-      `Transactions total (signed): ${fmt(totalSigned)}`,
-      `Saved (current + signed): ${fmt(saved)}`,
-      `Remaining to goal: ${fmt(remain)}`,
-      '',
-      'Transactions:',
-      ...(state.items.length
-        ? state.items.map(i=>{
-            const isNeg = Number(i.amount) < 0;
-            const label = isNeg ? 'Withdraw' : 'Deposit';
-            return `- ${i.date} · ${label} · ${i.desc}: ${isNeg?'-':''}${fmt(Math.abs(i.amount))}`;
-          })
-        : ['(none)'])
-    ].join('\n');
+    const signed = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
+    const saved = Number(state.current||0)+signed;
+    const remain = Number(state.goal||0)-saved;
+    const lines=['Savings — Account & Goal',`Goal: ${fmt(state.goal)}`,`Current saved: ${fmt(state.current)}`,`Transactions (signed): ${fmt(signed)}`,`Saved (current + signed): ${fmt(saved)}`,`Remaining: ${fmt(remain)}`,'','Transactions:',...(state.items.length?state.items.map(i=>`- ${i.date} · ${(i.amount<0?'Withdraw':'Deposit')} · ${i.desc}: ${(i.amount<0?'-':'')}${fmt(Math.abs(i.amount))}`):['(none)'])].join('\n');
     navigator.clipboard.writeText(lines).then(()=>alert('Summary copied.'));
   }
 
-  window.del = del;
-  document.getElementById('add').addEventListener('click', add);
-  document.getElementById('reset').addEventListener('click', resetAll);
-  document.getElementById('copy').addEventListener('click', copySummary);
-  goal.addEventListener('change', setGoal);
-  goal.addEventListener('keyup', e=>{ if(e.key==='Enter') setGoal(); });
-  current.addEventListener('change', setCurrent);
-  current.addEventListener('keyup', e=>{ if(e.key==='Enter') setCurrent(); });
-
+  window.del=del;
+  document.getElementById('add').addEventListener('click',add);
+  document.getElementById('reset').addEventListener('click',resetAll);
+  document.getElementById('copy').addEventListener('click',copySummary);
+  goal.addEventListener('change',setGoal); goal.addEventListener('keyup',e=>{if(e.key==='Enter')setGoal();});
+  current.addEventListener('change',setCurrent); current.addEventListener('keyup',e=>{if(e.key==='Enter')setCurrent();});
   render();
 </script>
 </body>
