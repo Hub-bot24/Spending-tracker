@@ -58,6 +58,81 @@
   body{padding-bottom:90px}
   @media (prefers-color-scheme:dark){.tabs{background:rgba(17,24,39,.82)}.tabs a{color:#9ca3af}.tabs a.active{color:#fff;background:#374151}}
 </style>
+<!-- LIVE SHARING (Firebase + Firestore) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+
+  // --- YOUR FIREBASE CONFIG (from the screenshot) ---
+  const firebaseConfig = {
+    apiKey: "AIzaSyDMpr0lp3yANfgQAlm0S653kBEyI00L4V0",
+    authDomain: "family-spending-tracker-5670c.firebaseapp.com",
+    projectId: "family-spending-tracker-5670c",
+    storageBucket: "family-spending-tracker-5670c.firebasestorage.app",
+    messagingSenderId: "354132991425",
+    appId: "1:354132991425:web:4f0c2e5519ae5b2ba0e43c",
+    measurementId: "G-RS2D1YQEY8"
+  };
+
+  // One shared code for the whole family (change if you like)
+  const paramFam = new URLSearchParams(location.search).get('fam');
+  const FAMILY = (paramFam || 'daniel-family').trim();
+
+  // Which page am I? (so each page saves to its own doc)
+  const PAGE = location.pathname.includes('/food/')    ? 'food'
+             : location.pathname.includes('/savings/') ? 'savings'
+             : 'spending';
+
+  // Init Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  // Your pages already define "state" + "render()".
+  // We wrap render() so every UI change gets saved (debounced).
+  const _render = render;
+  let saveTimer = null;
+  function queueSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveCloud, 300); }
+  render = function(){ _render(); queueSave(); };
+
+  async function saveCloud(){
+    try{
+      const ref = doc(db, "families", FAMILY, "pages", PAGE);
+      await setDoc(ref, { ...state, updatedAt: serverTimestamp() }, { merge: true });
+    }catch(e){ console.error("Cloud save failed:", e); }
+  }
+
+  // Sign in anonymously and wire up first load + live updates
+  signInAnonymously(auth).catch(console.error);
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return;
+    const ref = doc(db, "families", FAMILY, "pages", PAGE);
+
+    // First load from cloud
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const data = snap.data();
+      Object.keys(state).forEach(k => delete state[k]); // clear local
+      Object.assign(state, data);                       // apply cloud
+      _render();                                        // draw once (no save)
+    } else {
+      await setDoc(ref, { ...state, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    }
+
+    // Live updates from other phones
+    onSnapshot(ref, (ss) => {
+      if (!ss.exists()) return;
+      const data = ss.data();
+      if (JSON.stringify(data) !== JSON.stringify(state)) {
+        Object.keys(state).forEach(k => delete state[k]);
+        Object.assign(state, data);
+        _render(); // draw without re-saving
+      }
+    });
+  });
+</script>
 
 <body>
   <header class="appbar">
