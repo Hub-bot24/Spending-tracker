@@ -1,173 +1,180 @@
 <!doctype html>
 <html lang="en">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Savings — Account & Goal</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Spending — Monthly Tracker</title>
 
-<link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#111827">
-<link rel="apple-touch-icon" href="../icons/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#0f172a" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('../sw.js').catch(console.error);
+    navigator.serviceWorker.register('./sw.js').catch(console.error);
   }
 </script>
 
 <style>
-  :root{--b:#111827;--g:#6b7280;--bd:#e5e7eb;--bg:#f9fafb}
-  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);margin:0}
-  .wrap{max-width:760px;margin:32px auto;padding:0 16px}
-  .card{background:#fff;border:1px solid var(--bd);border-radius:16px;padding:16px 16px 12px;box-shadow:0 1px 2px rgba(0,0,0,.05);margin:12px 0}
-  h1{font-size:clamp(20px,3.2vw,28px);margin:6px 0 4px;color:var(--b)}
-  .muted{color:var(--g)}
-  label{display:block;margin:.5rem 0 .25rem;color:var(--b);font-weight:600}
-  input{width:100%;padding:.65rem .75rem;border:1px solid var(--bd);border-radius:12px;font-size:16px}
-  .row{display:grid;grid-template-columns:1fr 140px 110px;gap:10px;align-items:end}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .btn{background:var(--b);color:#fff;border:0;border-radius:12px;padding:.65rem .9rem;cursor:pointer}
-  .btn.secondary{background:#fff;color:var(--b);border:1px solid var(--bd)}
-  .btn.small{padding:.45rem .6rem;border-radius:10px}
-  table{width:100%;border-collapse:separate;border-spacing:0;margin-top:8px}
-  th,td{padding:10px;border-bottom:1px solid var(--bd);text-align:left}
-  th{font-size:13px;color:var(--g);font-weight:600}
-  td:last-child{text-align:right}
-  .totals{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-  .pill{display:flex;flex-direction:column;gap:6px;border:1px solid var(--bd);border-radius:14px;padding:12px;background:#fff}
-  .pill .t{font-size:12px;color:var(--g)}
-  .pill .v{font-size:18px;font-weight:700}
-  .right{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
-  .danger{color:#b91c1c}
-  .ok{color:#065f46}
+  :root{
+    --ink:#0f172a;--ink-2:#334155;--muted:#64748b;
+    --line:#e5e7eb;--bg:#f8fafc;--card:#ffffff;
+    --brand:#2563eb;--brand-2:#1e40af;--ok:#0f766e;--warn:#b91c1c;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font:400 16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
 
-  .tabbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--bd);display:flex;z-index:9999}
-  .tabbar a{flex:1;text-align:center;padding:.8rem 1rem;text-decoration:none;font-weight:700;color:var(--g)}
-  .tabbar a.active{color:var(--b)}
-  .wrap{margin-bottom:84px}
+  /* App header */
+  .appbar{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#0f172a 0%,#111827 100%);color:#fff}
+  .appbar .inner{max-width:900px;margin:0 auto;padding:14px 16px 12px}
+  .appbar h1{margin:0;font-size:20px;font-weight:700;letter-spacing:.2px}
+  .appbar p{margin:4px 0 0;color:#cbd5e1;font-size:13px}
+
+  .wrap{max-width:900px;margin:16px auto 0;padding:0 16px 100px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 16px 14px;box-shadow:0 10px 20px rgba(2,8,23,.04);margin:12px 0}
+  label{display:block;margin:.35rem 0 .35rem;font-weight:600;color:var(--ink-2)}
+  input{width:100%;padding:.7rem .8rem;border:1px solid var(--line);border-radius:12px;font-size:16px;background:#fff}
+  .row{display:grid;grid-template-columns:1.4fr 140px 118px;gap:10px;align-items:end}
+  .btn{background:var(--brand);color:#fff;border:0;border-radius:12px;padding:.7rem .95rem;font-weight:700;cursor:pointer}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line)}
+  .btn.small{padding:.45rem .65rem;border-radius:10px}
+  .right{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:10px}
+
+  table{width:100%;border-collapse:separate;border-spacing:0;margin-top:6px}
+  th,td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:left}
+  th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  td:last-child{text-align:right}
+
+  .pills{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+  .pill{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .pill .t{font:600 12px/1 var(--font);color:var(--muted)}
+  .pill .v{margin-top:6px;font:800 20px/1 var(--font);letter-spacing:.3px}
+  .ok{color:var(--ok)} .warn{color:var(--warn)}
+
+  /* TAB BAR */
+  .tabs{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.92);backdrop-filter:saturate(180%) blur(10px);border-top:1px solid var(--line);display:flex;gap:8px;padding:8px env(safe-area-inset-right) calc(8px + env(safe-area-inset-bottom)) env(safe-area-inset-left);z-index:1000}
+  .tabs a{flex:1;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;padding:10px 6px;border-radius:12px;color:#6b7280;text-decoration:none;font:600 12px/1.1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  .tabs a.active{color:#0f172a;background:#f3f4f6}
+  .tabs svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2}
+  body{padding-bottom:90px}
+  @media (prefers-color-scheme:dark){.tabs{background:rgba(17,24,39,.82)}.tabs a{color:#9ca3af}.tabs a.active{color:#fff;background:#374151}}
 </style>
 
 <body>
-  <div class="wrap">
-    <h1>Savings — Account & Goal</h1>
-    <p class="muted">Set a savings goal and your current saved balance. Add deposits; Remaining updates automatically. Works offline.</p>
+  <header class="appbar">
+    <div class="inner">
+      <h1>Spending</h1>
+      <p>Set your monthly spending money and record expenses. Everything is saved on your device and works offline.</p>
+    </div>
+  </header>
 
-    <div class="card">
-      <div class="row2">
-        <div>
-          <label for="goal">Savings goal (AUD)</label>
-          <input id="goal" type="number" min="0" step="0.01" placeholder="e.g. 2000">
-        </div>
-        <div>
-          <label for="current">Current saved balance (AUD)</label>
-          <input id="current" type="number" min="0" step="0.01" placeholder="e.g. 350">
-        </div>
-      </div>
-      <div class="right" style="margin-top:10px">
-        <button class="btn small secondary" id="reset">Reset</button>
+  <main class="wrap">
+    <!-- Budget card -->
+    <section class="card">
+      <label for="budget">Monthly spending money (AUD)</label>
+      <input id="budget" type="number" step="0.01" min="0" placeholder="e.g. 1200" />
+      <div class="right">
+        <button class="btn small secondary" id="reset">Reset month</button>
         <button class="btn small secondary" id="copy">Copy summary</button>
       </div>
-    </div>
+    </section>
 
-    <div class="card">
+    <!-- Entry card -->
+    <section class="card">
       <div class="row">
         <div>
-          <label for="desc">Deposit note</label>
-          <input id="desc" placeholder="e.g. Paycheck / Transfer">
+          <label for="desc">Entry</label>
+          <input id="desc" placeholder="e.g. Groceries / Fuel / Coffee" />
         </div>
         <div>
           <label for="amt">Amount (AUD)</label>
-          <input id="amt" type="number" step="0.01" min="0" placeholder="e.g. 50.00">
+          <input id="amt" type="number" step="0.01" min="0" placeholder="e.g. 45.50" />
         </div>
         <button class="btn" id="add">Add</button>
       </div>
 
       <table>
-        <thead><tr><th>Date</th><th>Deposit</th><th>Amount</th></tr></thead>
-        <tbody id="rows"><tr><td colspan="3" class="muted">No deposits yet.</td></tr></tbody>
+        <thead><tr><th>Date</th><th>Entry</th><th>Amount</th></tr></thead>
+        <tbody id="rows"><tr><td colspan="3" class="muted">No entries yet.</td></tr></tbody>
       </table>
-    </div>
+    </section>
 
-    <div class="totals">
-      <div class="pill"><span class="t">Goal</span><span class="v" id="tGoal">$0</span></div>
-      <div class="pill"><span class="t">Saved (current + deposits)</span><span class="v" id="tSaved">$0</span></div>
-      <div class="pill"><span class="t">Remaining to goal</span><span class="v" id="tRemain">$0</span></div>
-    </div>
-  </div>
+    <!-- Totals -->
+    <section class="pills">
+      <div class="pill"><div class="t">Budget (month)</div><div class="v" id="tBudget">$0</div></div>
+      <div class="pill"><div class="t">Spent</div><div class="v" id="tSpent">$0</div></div>
+      <div class="pill"><div class="t">Remaining</div><div class="v" id="tRemain">$0</div></div>
+    </section>
+  </main>
 
-  <nav class="tabbar" role="navigation" aria-label="Bottom tabs">
-    <a href="/Spending-tracker/" data-tab="spending">Spending</a>
-    <a href="/Spending-tracker/food/" data-tab="food">Food</a>
-    <a href="/Spending-tracker/savings/" data-tab="savings" class="active">Savings</a>
+  <!-- TABS -->
+  <nav class="tabs" role="navigation" aria-label="Bottom tabs">
+    <a href="/Spending-tracker/" data-tab="spending" class="active">
+      <svg viewBox="0 0 24 24"><path d="M3 7h18a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><path d="M1 11h22"/></svg>
+      <span>Spending</span>
+    </a>
+    <a href="/Spending-tracker/food/" data-tab="food">
+      <svg viewBox="0 0 24 24"><path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v7M14 3v18M19 3l-2 6 3 12"/></svg>
+      <span>Food</span>
+    </a>
+    <a href="/Spending-tracker/savings/" data-tab="savings">
+      <svg viewBox="0 0 24 24"><path d="M5 11a7 7 0 0 1 7-6h2a7 7 0 0 1 7 7v3a2 2 0 0 1-2 2h-2l-1 2H8l-1-2H5a2 2 0 0 1-2-2v-3l2-1Z"/><path d="M13 9h1"/></svg>
+      <span>Savings</span>
+    </a>
   </nav>
 
 <script>
   const fmt = v => new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD'}).format(Number(v||0));
   const today = () => new Date().toISOString().slice(0,10);
+  const KEY = 'spending.monthly.v3';
 
-  const KEY="savings.account.v1";
-  const state = JSON.parse(localStorage.getItem(KEY) || '{"goal":0,"current":0,"items":[]}');
+  const state = JSON.parse(localStorage.getItem(KEY) || '{"budget":0,"items":[]}');
 
   const $ = id => document.getElementById(id);
-  const goal = $('goal'), current = $('current'), rows = $('rows'),
-        tGoal = $('tGoal'), tSaved = $('tSaved'), tRemain = $('tRemain'),
-        desc = $('desc'), amt = $('amt');
+  const budget=$('budget'), rows=$('rows'), tB=$('tBudget'), tS=$('tSpent'), tR=$('tRemain'), desc=$('desc'), amt=$('amt');
 
   function render(){
-    const deposits = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
-    const saved = Number(state.current||0) + deposits;
-    const remain = Number(state.goal||0) - saved;
+    const spent = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
+    const remain = Number(state.budget||0) - spent;
 
     rows.innerHTML = state.items.length
       ? state.items.map((i,idx)=>`
         <tr>
           <td>${i.date}</td>
           <td>${i.desc}</td>
-          <td>
-            ${fmt(i.amount)}
-            <button class="btn small secondary" onclick="del(${idx})" title="Remove">✕</button>
-          </td>
+          <td>${fmt(i.amount)} <button class="btn small secondary" onclick="del(${idx})">✕</button></td>
         </tr>`).join('')
-      : `<tr><td colspan="3" class="muted">No deposits yet.</td></tr>`;
+      : `<tr><td colspan="3" class="muted">No entries yet.</td></tr>`;
 
-    tGoal.textContent = fmt(state.goal);
-    tSaved.textContent = fmt(saved);
-    tRemain.textContent = fmt(remain);
+    tB.textContent = fmt(state.budget);
+    tS.textContent = fmt(spent);
+    tR.textContent = fmt(remain);
+    tR.className = 'v ' + (remain >= 0 ? 'ok' : 'warn');
 
-    tRemain.classList.toggle('danger', remain < 0);
-    tRemain.classList.toggle('ok', remain >= 0);
-
-    goal.value = state.goal || '';
-    current.value = state.current || '';
+    budget.value = state.budget || '';
     localStorage.setItem(KEY, JSON.stringify(state));
   }
 
   function add(){
-    const d = (desc.value||'').trim();
-    const a = Number(amt.value||0);
-    if (!d || !(a>0)) return;
-    state.items.unshift({date: today(), desc: d, amount: a});
-    desc.value=''; amt.value='';
-    render();
+    const d=(desc.value||'').trim(), a=Number(amt.value||0);
+    if(!d || !(a>0)) return;
+    state.items.unshift({date:today(), desc:d, amount:a});
+    desc.value=''; amt.value=''; render();
   }
   function del(idx){ state.items.splice(idx,1); render(); }
-  function setGoal(){ state.goal = Number(goal.value||0); render(); }
-  function setCurrent(){ state.current = Number(current.value||0); render(); }
+  function setBudget(){ state.budget = Number(budget.value||0); render(); }
   function resetAll(){
-    if (!confirm('Reset savings account? This clears goal, current saved, and deposits.')) return;
-    state.goal = 0; state.current = 0; state.items = []; render();
+    if(!confirm('Reset this month? This clears entries and budget.')) return;
+    state.budget=0; state.items=[]; render();
   }
   function copySummary(){
-    const deposits = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
-    const saved = Number(state.current||0) + deposits;
-    const remain = Number(state.goal||0) - saved;
+    const spent = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
+    const remain = Number(state.budget||0) - spent;
     const lines = [
-      `Savings — Account & Goal`,
-      `Goal: ${fmt(state.goal)}`,
-      `Current saved: ${fmt(state.current)}`,
-      `Deposits total: ${fmt(deposits)}`,
-      `Saved (current + deposits): ${fmt(saved)}`,
-      `Remaining to goal: ${fmt(remain)}`,
-      '',
-      'Deposits:',
+      'Spending — Monthly Tracker',
+      `Budget: ${fmt(state.budget)}`,
+      `Spent:  ${fmt(spent)}`,
+      `Remaining: ${fmt(remain)}`,
+      '', 'Entries:',
       ...(state.items.length ? state.items.map(i=>`- ${i.date} · ${i.desc}: ${fmt(i.amount)}`) : ['(none)'])
     ].join('\n');
     navigator.clipboard.writeText(lines).then(()=>alert('Summary copied.'));
@@ -177,13 +184,11 @@
   document.getElementById('add').addEventListener('click', add);
   document.getElementById('reset').addEventListener('click', resetAll);
   document.getElementById('copy').addEventListener('click', copySummary);
-  goal.addEventListener('change', setGoal);
-  goal.addEventListener('keyup', e=>{ if(e.key==='Enter') setGoal(); });
-  current.addEventListener('change', setCurrent);
-  current.addEventListener('keyup', e=>{ if(e.key==='Enter') setCurrent(); });
-
+  budget.addEventListener('change', setBudget);
+  budget.addEventListener('keyup', e=>{ if(e.key==='Enter') setBudget(); });
   render();
 </script>
 </body>
 </html>
+
 
