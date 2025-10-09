@@ -196,7 +196,24 @@
     localStorage.setItem(KEY,JSON.stringify(state));
   }
   function add(){const d=(desc.value||'').trim(),a=Number(amt.value||0);if(!d||!(a>0))return;state.items.unshift({date:today(),desc:d,amount:a});desc.value='';amt.value='';render();}
-  function del(i){state.items.splice(i,1);render();}
+function del(idx){
+  // Build a friendly confirmation message
+  const it  = state.items?.[idx] || {};
+  const txt = (it.desc || it.name || '').toString().trim();
+  const amt = (typeof it.amount === 'number') ? it.amount : it.i_amount;
+
+  const pretty = (typeof fmt === 'function' && (typeof amt === 'number'))
+    ? ` (${fmt(amt)})`
+    : '';
+
+  const label = txt ? `"${txt}"${pretty}` : 'this entry';
+
+  if (!confirm(`Delete ${label}?`)) return;
+
+  state.items.splice(idx, 1);
+  render();
+}
+
   function setBudget(){state.budget=Number(budget.value||0);render();}
   function resetAll(){if(!confirm('Reset food?'))return;state.budget=0;state.items=[];render();}
   function copySummary(){const spent = state.items.reduce((s,i)=>s+Number(i.amount||0),0);const remain=Number(state.budget||0)-spent;const lines=['Food — Monthly Tracker',`Budget: ${fmt(state.budget)}`,`Spent:  ${fmt(spent)}`,`Remaining: ${fmt(remain)}`,'','Entries:',...(state.items.length?state.items.map(i=>`- ${i.date} · ${i.desc}: ${fmt(i.amount)}`):['(none)'])].join('\n');navigator.clipboard.writeText(lines).then(()=>alert('Summary copied.'));}
