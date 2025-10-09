@@ -1,230 +1,124 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Food Money – Monthly Subtractor</title>
-  <link rel="manifest" href="../manifest.webmanifest">
-  <meta name="theme-color" content="#111827">
-  <script>
-    // Register SW (relative to repo root)
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('../sw.js').catch(console.error);
-    }
-  </script>
-  <style>
-    :root{--b:#111827;--g:#6b7280;--bg:#f9fafb;--bd:#e5e7eb;--accent:#111827}
-    *{box-sizing:border-box}
-    body{font-family:system-ui,apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:var(--bg);color:var(--b)}
-    .wrap{max-width:760px;margin:32px auto;padding:0 16px}
-    .card{background:#fff;border:1px solid var(--bd);border-radius:16px;padding:16px 16px 12px;box-shadow:0 1px 2px rgba(0,0,0,.05);margin:12px 0}
-    h1{font-size:clamp(20px,3.2vw,28px);margin:6px 0 4px;color:var(--b)}
-    .muted{color:var(--g)}
-
-    label{display:block;margin:.5rem 0 .25rem;font-weight:600;color:var(--b)}
-    input[type="text"], input[type="number"]{
-      width:100%;padding:.65rem .75rem;border:1px solid var(--bd);border-radius:12px;font-size:16px;
-    }
-
-    .row{display:grid;grid-template-columns:1fr 140px 110px;gap:10px;align-items:end}
-    .row .btn{grid-column:3}
-    .btn{
-      background:var(--accent);color:#fff;border:1px solid var(--accent);
-      border-radius:12px;padding:.65rem .9rem;font-weight:600;cursor:pointer
-    }
-    .btn_secondary{background:#fff;color:var(--b);border:1px solid var(--bd)}
-    .btn:disabled{opacity:.6;cursor:not-allowed}
-
-    table{width:100%;border-collapse:separate;border-spacing:0;margin-top:8px}
-    th,td{padding:10px;border-bottom:1px solid var(--bd);text-align:left;font-size:15px}
-    td:last-child{text-align:right}
-    .totals{display:flex;gap:10px;flex-wrap:wrap}
-    .pill{flex:1;min-width:160px;border:1px solid var(--bd);border-radius:14px;background:#fff;padding:12px}
-
-    .tabs{
-      position:sticky;bottom:0;background:#fff;border-top:1px solid var(--bd);
-      display:flex;gap:8px;padding:10px 12px
-    }
-    .tabs a{flex:1;text-align:center;text-decoration:none;border:1px solid var(--bd);
-      border-radius:10px;padding:10px 0;color:var(--b);font-weight:600}
-    .tabs a.active{background:#111827;color:#fff;border-color:#111827}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Savings Tracker</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#111827">
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('../sw.js').catch(console.error)}</script>
+<style>
+:root{--b:#111827;--g:#6b7280;--bg:#f9fafb;--bd:#e5e7eb}
+*{box-sizing:border-box} body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:var(--bg);color:var(--b)}
+.wrap{max-width:760px;margin:32px auto;padding:0 16px}
+.card{background:#fff;border:1px solid var(--bd);border-radius:16px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.05);margin:12px 0}
+h1{font-size:clamp(20px,3.2vw,28px);margin:6px 0 4px} .muted{color:var(--g)}
+label{display:block;margin:.5rem 0 .25rem;font-weight:600}
+input[type=text],input[type=number]{width:100%;padding:.65rem .75rem;border:1px solid var(--bd);border-radius:12px;font-size:16px}
+.row{display:grid;grid-template-columns:1fr 140px 120px 110px;gap:10px;align-items:end}
+.btn{background:#111827;color:#fff;border:1px solid #111827;border-radius:12px;padding:.65rem .9rem;font-weight:600;cursor:pointer}
+.btn_secondary{background:#fff;color:var(--b);border:1px solid var(--bd)}
+table{width:100%;border-collapse:separate;border-spacing:0;margin-top:8px}
+th,td{padding:10px;border-bottom:1px solid var(--bd);text-align:left;font-size:15px}
+td:last-child{text-align:right}
+.totals{display:flex;gap:10px;flex-wrap:wrap} .pill{flex:1;min-width:160px;border:1px solid var(--bd);border-radius:14px;background:#fff;padding:12px}
+.progress{height:12px;border-radius:999px;background:#eee;overflow:hidden}
+.progress>div{height:100%;background:#16a34a}
+.tabs{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--bd);display:flex;gap:8px;padding:10px 12px}
+.tabs a{flex:1;text-align:center;text-decoration:none;border:1px solid var(--bd);border-radius:10px;padding:10px 0;color:var(--b);font-weight:600}
+.tabs a.active{background:#111827;color:#fff;border-color:#111827}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <!-- Budget -->
-    <div class="card">
-      <h1>Food Money (Monthly)</h1>
-      <label for="budget">Monthly food money (AUD)</label>
-      <input id="budget" type="number" inputmode="decimal" placeholder="e.g. 600" />
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button id="reset" class="btn_secondary btn">Reset month</button>
-        <button id="copy"  class="btn_secondary btn">Copy summary</button>
-      </div>
-    </div>
-
-    <!-- Add entry -->
-    <div class="card">
-      <div class="row">
-        <div>
-          <label for="desc">Entry</label>
-          <input id="desc" type="text" placeholder="e.g. Groceries" />
-        </div>
-        <div>
-          <label for="amount">Amount (AUD)</label>
-          <input id="amount" type="number" inputmode="decimal" placeholder="e.g. 45.50" />
-        </div>
-        <button id="add" class="btn">Add</button>
-      </div>
-
-      <table id="list">
-        <thead>
-          <tr><th style="width:110px">Date</th><th>Entry</th><th style="width:120px">Amount</th><th style="width:62px"></th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-
-      <p class="muted" id="empty" style="margin:12px 0 0">No entries yet.</p>
-    </div>
-
-    <!-- Totals -->
-    <div class="card">
-      <div class="totals">
-        <div class="pill">
-          <div class="muted">Budget (month)</div>
-          <div id="t_budget">$0.00</div>
-        </div>
-        <div class="pill">
-          <div class="muted">Spent</div>
-          <div id="t_spent">$0.00</div>
-        </div>
-        <div class="pill">
-          <div class="muted">Remaining</div>
-          <div id="t_left">$0.00</div>
-        </div>
-      </div>
-    </div>
+<div class="wrap">
+  <div class="card">
+    <h1>Savings</h1>
+    <label for="house">House price (AUD)</label>
+    <input id="house" type="number" inputmode="decimal" placeholder="e.g. 650000"/>
+    <label for="goal">Deposit goal %</label>
+    <input id="goal" type="number" inputmode="decimal" placeholder="e.g. 20"/>
   </div>
 
-  <nav class="tabs">
-    <a href="../" id="tab-spend">Spending</a>
-    <a href="./" class="active">Food</a>
-    <a href="../savings/">Savings</a>
-  </nav>
+  <div class="card">
+    <div class="row">
+      <div><label for="desc">Entry</label><input id="desc" type="text" placeholder="e.g. Transfer"/></div>
+      <div><label for="amount">Amount (AUD)</label><input id="amount" type="number" inputmode="decimal" placeholder="e.g. 250"/></div>
+      <div><label for="sub">Subtract?</label><input id="sub" type="checkbox"/> <span class="muted">tick to subtract</span></div>
+      <button id="add" class="btn">Add</button>
+    </div>
+    <table id="list">
+      <thead><tr><th style="width:110px">Date</th><th>Entry</th><th style="width:120px">Amount</th><th style="width:62px"></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p class="muted" id="empty" style="margin:12px 0 0">No entries yet.</p>
+  </div>
 
-  <script>
-    const CURRENCY = new Intl.NumberFormat('en-AU', { style:'currency', currency:'AUD' });
-    const KEY = 'food_v1'; // separate from spending
+  <div class="card">
+    <div class="totals">
+      <div class="pill"><div class="muted">Total saved</div><div id="t_saved">$0.00</div></div>
+      <div class="pill"><div class="muted">Goal amount</div><div id="t_goal_amt">$0.00</div></div>
+      <div class="pill"><div class="muted">% of house price</div><div id="t_pct">0%</div></div>
+    </div>
+    <div class="progress" style="margin-top:10px"><div id="bar" style="width:0%"></div></div>
+  </div>
+</div>
 
-    const els = {
-      budget: document.getElementById('budget'),
-      desc: document.getElementById('desc'),
-      amount: document.getElementById('amount'),
-      add: document.getElementById('add'),
-      reset: document.getElementById('reset'),
-      copy: document.getElementById('copy'),
-      tbody: document.querySelector('#list tbody'),
-      empty: document.getElementById('empty'),
-      t_budget: document.getElementById('t_budget'),
-      t_spent: document.getElementById('t_spent'),
-      t_left: document.getElementById('t_left'),
-    };
+<nav class="tabs">
+  <a href="../">Spending</a>
+  <a href="../food/">Food</a>
+  <a href="./" class="active">Savings</a>
+</nav>
 
-    // state
-    let state = load() || { budget: 0, items: [] };
-
-    function load() {
-      try { return JSON.parse(localStorage.getItem(KEY)); } catch(e){ return null; }
-    }
-    function save() {
-      localStorage.setItem(KEY, JSON.stringify(state));
-    }
-
-    function fmt(n){ return CURRENCY.format(Number(n||0)); }
-    function today(){ return new Date().toISOString().slice(0,10); }
-
-    function render(){
-      // totals
-      const spent = state.items.reduce((s,i)=>s + Number(i.amount||0), 0);
-      els.t_budget.textContent = fmt(state.budget||0);
-      els.t_spent.textContent  = fmt(spent);
-      els.t_left.textContent   = fmt((Number(state.budget||0) - spent));
-
-      // budget field
-      els.budget.value = state.budget || '';
-
-      // table
-      els.tbody.innerHTML = '';
-      els.empty.style.display = state.items.length ? 'none' : 'block';
-
-      state.items
-        .slice()
-        .sort((a,b)=> b.date.localeCompare(a.date))
-        .forEach((i,idx)=>{
-          const tr = document.createElement('tr');
-          const delIdx = state.items.indexOf(i); // stable index
-          tr.innerHTML = `
-            <td>${i.date}</td>
-            <td>${escapeHtml(i.desc||'')}</td>
-            <td>${fmt(i.amount)}</td>
-            <td><button data-del="${delIdx}" class="btn_secondary" style="padding:.35rem .6rem">Del</button></td>`;
-          els.tbody.appendChild(tr);
-        });
-    }
-
-    function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-
-    // events
-    els.add.addEventListener('click', ()=>{
-      const desc = els.desc.value.trim();
-      const amt  = Number(els.amount.value);
-      if(!desc || !isFinite(amt)) return;
-      state.items.push({ date: today(), desc, amount: +amt.toFixed(2) });
-      els.desc.value = ''; els.amount.value = '';
-      save(); render();
-    });
-
-    els.budget.addEventListener('change', ()=>{
-      const v = Number(els.budget.value);
-      state.budget = isFinite(v) ? +v.toFixed(2) : 0;
-      save(); render();
-    });
-
-    els.reset.addEventListener('click', ()=>{
-      if(!confirm('Reset this month? This clears entries and budget.')) return;
-      state = { budget: 0, items: [] };
-      save(); render();
-    });
-
-    els.copy.addEventListener('click', ()=>{
-      const spent = state.items.reduce((s,i)=>s + Number(i.amount||0), 0);
-      const left = (Number(state.budget||0) - spent);
-      const lines = [
-        'Food Money (Monthly)',
-        `Budget: ${fmt(state.budget||0)}`,
-        `Spent:  ${fmt(spent)}`,
-        `Remaining: ${fmt(left)}`,
-        '',
-        'Entries:',
-        ...state.items.map(i => `${i.date} – ${i.desc}: ${fmt(i.amount)}`)
-      ];
-      navigator.clipboard.writeText(lines.join('\n')).then(()=>alert('Summary copied.'));
-    });
-
-    // delete (with confirm)
-    els.tbody.addEventListener('click', (e)=>{
-      const btn = e.target.closest('[data-del]');
-      if(!btn) return;
-      const idx = Number(btn.getAttribute('data-del'));
-      const item = state.items[idx];
-      if(!item) return;
-      if(!confirm(`Delete "${item.desc}" for ${fmt(item.amount)}?`)) return;
-      state.items.splice(idx,1);
-      save(); render();
-    });
-
-    // init
-    render();
-  </script>
-</body>
-</html>
+<script>
+const C=new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD'});
+const KEY='savings_v2';
+const els={house:house,goal:goal,desc:desc,amount:amount,sub:sub,add:add,tbody:document.querySelector('#list tbody'),empty:empty,ts:t_saved,tg:t_goal_amt,tp:t_pct,bar:bar};
+let state=load()||{house:0,goalPct:20,items:[]};
+function load(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function fmt(n){return C.format(Number(n||0))}
+function today(){return new Date().toISOString().slice(0,10)}
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function totals(){
+  const saved=state.items.reduce((s,i)=>s+Number(i.amount||0),0);
+  const goalAmt=(Number(state.house||0)*Number(state.goalPct||0)/100)||0;
+  const pctHouse=(Number(state.house||0)? (saved/Number(state.house))*100:0);
+  return {saved,goalAmt,pctHouse};
+}
+function render(){
+  els.house.value=state.house||'';
+  els.goal.value=state.goalPct||'';
+  // list
+  els.tbody.innerHTML='';
+  els.empty.style.display=state.items.length?'none':'block';
+  state.items.slice().sort((a,b)=>b.date.localeCompare(a.date)).forEach(i=>{
+    const tr=document.createElement('tr');
+    const idx=state.items.indexOf(i);
+    tr.innerHTML=`<td>${i.date}</td><td>${escapeHtml(i.desc||'')}</td><td>${fmt(i.amount)}</td><td><button data-del="${idx}" class="btn_secondary" style="padding:.35rem .6rem">Del</button></td>`;
+    els.tbody.appendChild(tr);
+  });
+  // totals
+  const t=totals();
+  els.ts.textContent=fmt(t.saved);
+  els.tg.textContent=fmt(t.goalAmt);
+  const pct=Math.max(0,Math.min(100,t.pctHouse));
+  els.tp.textContent=(pct.toFixed(2))+'%';
+  els.bar.style.width=pct+'%';
+}
+house.addEventListener('change',()=>{state.house=+Number(house.value||0).toFixed(2); save(); render();});
+goal.addEventListener('change',()=>{state.goalPct=+Number(goal.value||0).toFixed(2); save(); render();});
+add.addEventListener('click',()=>{
+  const d=desc.value.trim(); const v=Number(amount.value);
+  if(!d||!isFinite(v))return; const val=sub.checked? -Math.abs(v):Math.abs(v);
+  state.items.push({date:today(),desc:d,amount:+val.toFixed(2)});
+  desc.value=''; amount.value=''; sub.checked=false; save(); render();
+});
+document.querySelector('#list tbody').addEventListener('click',(e)=>{
+  const b=e.target.closest('[data-del]'); if(!b)return;
+  const idx=Number(b.getAttribute('data-del')); const it=state.items[idx]; if(!it)return;
+  if(!confirm(`Delete "${it.desc}" for ${fmt(it.amount)}?`))return;
+  state.items.splice(idx,1); save(); render();
+});
+render();
+</script>
+</body></html>
