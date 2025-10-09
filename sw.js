@@ -1,6 +1,6 @@
 // sw.js
 // Cache-first PWA that ignores ?query so /index.html?v=41 still matches the cache.
-const VERSION = 'v43';
+const VERSION = 'v45';
 const ROOT = '/Spending-tracker';
 
 const ASSETS = [
