@@ -1,272 +1,124 @@
 <!doctype html>
 <html lang="en">
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Savings — Account & Goal</title>
-
-<link rel="manifest" href="../manifest.webmanifest" />
-<meta name="theme-color" content="#0f172a" />
-<link rel="apple-touch-icon" href="../icons/icon-192.png" />
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('../sw.js').catch(console.error);
-  }
-</script>
-
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Savings Tracker</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#111827">
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('../sw.js').catch(console.error)}</script>
 <style>
-  :root{--ink:#0f172a;--ink-2:#334155;--muted:#64748b;--line:#e5e7eb;--bg:#f8fafc;--card:#fff;--brand:#2563eb;--ok:#0f766e;--warn:#b91c1c}
-  *{box-sizing:border-box}html,body{margin:0}
-  body{font:400 16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
-  .appbar{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#0f172a 0%,#111827 100%);color:#fff}
-  .appbar .inner{max-width:900px;margin:0 auto;padding:14px 16px 12px}
-  .appbar h1{margin:0;font-size:20px;font-weight:700}.appbar p{margin:4px 0 0;color:#cbd5e1;font-size:13px}
-  .wrap{max-width:900px;margin:16px auto 0;padding:0 16px 100px}
-  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 10px 20px rgba(2,8,23,.04);margin:12px 0}
-  label{display:block;margin:.35rem 0 .35rem;font-weight:600;color:#334155}
-  input,select{width:100%;padding:.7rem .8rem;border:1px solid var(--line);border-radius:12px;font-size:16px;background:#fff}
-  .row{display:grid;grid-template-columns:1.4fr 140px 140px 118px;gap:10px;align-items:end}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .btn{background:#2563eb;color:#fff;border:0;border-radius:12px;padding:.7rem .95rem;font-weight:700;cursor:pointer}
-  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line)} .btn.small{padding:.45rem .65rem;border-radius:10px}
-  .right{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:10px}
-  table{width:100%;border-collapse:separate;border-spacing:0;margin-top:6px}
-  th,td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
-  th{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em}
-  td:last-child{text-align:right}
-  .neg{color:#b91c1c}.pos{color:#0f766e}.badge{display:inline-block;font-size:12px;padding:.15rem .45rem;border-radius:999px;border:1px solid var(--line);margin-right:6px;color:#64748b}
-  .pills{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
-  .pill{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px}
-  .pill .t{font:600 12px/1 var(--font);color:#64748b}.pill .v{margin-top:6px;font:800 20px/1 var(--font)}
-  .tabs{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.92);backdrop-filter:saturate(180%) blur(10px);border-top:1px solid var(--line);display:flex;gap:8px;padding:8px env(safe-area-inset-right) calc(8px + env(safe-area-inset-bottom)) env(safe-area-inset-left);z-index:1000}
-  .tabs a{flex:1;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;padding:10px 6px;border-radius:12px;color:#6b7280;text-decoration:none;font:600 12px/1.1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-  .tabs a.active{color:#0f172a;background:#f3f4f6} .tabs svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2}
-  body{padding-bottom:90px}
+:root{--b:#111827;--g:#6b7280;--bg:#f9fafb;--bd:#e5e7eb}
+*{box-sizing:border-box} body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:var(--bg);color:var(--b)}
+.wrap{max-width:760px;margin:32px auto;padding:0 16px}
+.card{background:#fff;border:1px solid var(--bd);border-radius:16px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.05);margin:12px 0}
+h1{font-size:clamp(20px,3.2vw,28px);margin:6px 0 4px} .muted{color:var(--g)}
+label{display:block;margin:.5rem 0 .25rem;font-weight:600}
+input[type=text],input[type=number]{width:100%;padding:.65rem .75rem;border:1px solid var(--bd);border-radius:12px;font-size:16px}
+.row{display:grid;grid-template-columns:1fr 140px 120px 110px;gap:10px;align-items:end}
+.btn{background:#111827;color:#fff;border:1px solid #111827;border-radius:12px;padding:.65rem .9rem;font-weight:600;cursor:pointer}
+.btn_secondary{background:#fff;color:var(--b);border:1px solid var(--bd)}
+table{width:100%;border-collapse:separate;border-spacing:0;margin-top:8px}
+th,td{padding:10px;border-bottom:1px solid var(--bd);text-align:left;font-size:15px}
+td:last-child{text-align:right}
+.totals{display:flex;gap:10px;flex-wrap:wrap} .pill{flex:1;min-width:160px;border:1px solid var(--bd);border-radius:14px;background:#fff;padding:12px}
+.progress{height:12px;border-radius:999px;background:#eee;overflow:hidden}
+.progress>div{height:100%;background:#16a34a}
+.tabs{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--bd);display:flex;gap:8px;padding:10px 12px}
+.tabs a{flex:1;text-align:center;text-decoration:none;border:1px solid var(--bd);border-radius:10px;padding:10px 0;color:var(--b);font-weight:600}
+.tabs a.active{background:#111827;color:#fff;border-color:#111827}
 </style>
-<!-- LIVE SHARING (Firebase + Firestore) -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-
-  // --- YOUR FIREBASE CONFIG (from the screenshot) ---
-  const firebaseConfig = {
-    apiKey: "AIzaSyDMpr0lp3yANfgQAlm0S653kBEyI00L4V0",
-    authDomain: "family-spending-tracker-5670c.firebaseapp.com",
-    projectId: "family-spending-tracker-5670c",
-    storageBucket: "family-spending-tracker-5670c.firebasestorage.app",
-    messagingSenderId: "354132991425",
-    appId: "1:354132991425:web:4f0c2e5519ae5b2ba0e43c",
-    measurementId: "G-RS2D1YQEY8"
-  };
-
-  // One shared code for the whole family (change if you like)
-  const paramFam = new URLSearchParams(location.search).get('fam');
-  const FAMILY = (paramFam || 'daniel-family').trim();
-
-  // Which page am I? (so each page saves to its own doc)
-  const PAGE = location.pathname.includes('/food/')    ? 'food'
-             : location.pathname.includes('/savings/') ? 'savings'
-             : 'spending';
-
-  // Init Firebase
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db   = getFirestore(app);
-
-  // Your pages already define "state" + "render()".
-  // We wrap render() so every UI change gets saved (debounced).
-  const _render = render;
-  let saveTimer = null;
-  function queueSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveCloud, 300); }
-  render = function(){ _render(); queueSave(); };
-
-  async function saveCloud(){
-    try{
-      const ref = doc(db, "families", FAMILY, "pages", PAGE);
-      await setDoc(ref, { ...state, updatedAt: serverTimestamp() }, { merge: true });
-    }catch(e){ console.error("Cloud save failed:", e); }
-  }
-
-  // Sign in anonymously and wire up first load + live updates
-  signInAnonymously(auth).catch(console.error);
-
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) return;
-    const ref = doc(db, "families", FAMILY, "pages", PAGE);
-
-    // First load from cloud
-    const snap = await getDoc(ref);
-    if (snap.exists()) {
-      const data = snap.data();
-      Object.keys(state).forEach(k => delete state[k]); // clear local
-      Object.assign(state, data);                       // apply cloud
-      _render();                                        // draw once (no save)
-    } else {
-      await setDoc(ref, { ...state, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-    }
-
-    // Live updates from other phones
-    onSnapshot(ref, (ss) => {
-      if (!ss.exists()) return;
-      const data = ss.data();
-      if (JSON.stringify(data) !== JSON.stringify(state)) {
-        Object.keys(state).forEach(k => delete state[k]);
-        Object.assign(state, data);
-        _render(); // draw without re-saving
-      }
-    });
-  });
-</script>
-
+</head>
 <body>
-  <header class="appbar"><div class="inner">
+<div class="wrap">
+  <div class="card">
     <h1>Savings</h1>
-    <p>Set a goal & current balance. Add <b>Deposits (+)</b> or <b>Withdrawals (−)</b>. Remaining updates automatically.</p>
-  </div></header>
+    <label for="house">House price (AUD)</label>
+    <input id="house" type="number" inputmode="decimal" placeholder="e.g. 650000"/>
+    <label for="goal">Deposit goal %</label>
+    <input id="goal" type="number" inputmode="decimal" placeholder="e.g. 20"/>
+  </div>
 
-  <main class="wrap">
-    <section class="card">
-      <div class="row2">
-        <div>
-          <label for="goal">Savings goal (AUD)</label>
-          <input id="goal" type="number" step="0.01" min="0" placeholder="e.g. 2000" />
-        </div>
-        <div>
-          <label for="current">Current saved balance (AUD)</label>
-          <input id="current" type="number" step="0.01" min="0" placeholder="e.g. 350" />
-        </div>
-      </div>
-      <div class="right">
-        <button class="btn small secondary" id="reset">Reset</button>
-        <button class="btn small secondary" id="copy">Copy summary</button>
-      </div>
-    </section>
+  <div class="card">
+    <div class="row">
+      <div><label for="desc">Entry</label><input id="desc" type="text" placeholder="e.g. Transfer"/></div>
+      <div><label for="amount">Amount (AUD)</label><input id="amount" type="number" inputmode="decimal" placeholder="e.g. 250"/></div>
+      <div><label for="sub">Subtract?</label><input id="sub" type="checkbox"/> <span class="muted">tick to subtract</span></div>
+      <button id="add" class="btn">Add</button>
+    </div>
+    <table id="list">
+      <thead><tr><th style="width:110px">Date</th><th>Entry</th><th style="width:120px">Amount</th><th style="width:62px"></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p class="muted" id="empty" style="margin:12px 0 0">No entries yet.</p>
+  </div>
 
-    <section class="card">
-      <div class="row">
-        <div>
-          <label for="desc">Note</label>
-          <input id="desc" placeholder="e.g. Paycheck / Transfer / ATM" />
-        </div>
-        <div>
-          <label for="amt">Amount (AUD)</label>
-          <input id="amt" type="number" step="0.01" min="0" placeholder="50.00" />
-        </div>
-        <div>
-          <label for="kind">Type</label>
-          <select id="kind">
-            <option value="deposit">Deposit (+)</option>
-            <option value="withdraw">Withdraw (−)</option>
-          </select>
-        </div>
-        <button class="btn" id="add">Add</button>
-      </div>
+  <div class="card">
+    <div class="totals">
+      <div class="pill"><div class="muted">Total saved</div><div id="t_saved">$0.00</div></div>
+      <div class="pill"><div class="muted">Goal amount</div><div id="t_goal_amt">$0.00</div></div>
+      <div class="pill"><div class="muted">% of house price</div><div id="t_pct">0%</div></div>
+    </div>
+    <div class="progress" style="margin-top:10px"><div id="bar" style="width:0%"></div></div>
+  </div>
+</div>
 
-      <table>
-        <thead><tr><th>Date</th><th>Note</th><th>Amount</th></tr></thead>
-        <tbody id="rows"><tr><td colspan="3" class="muted">No transactions yet.</td></tr></tbody>
-      </table>
-    </section>
-
-    <section class="pills">
-      <div class="pill"><div class="t">Goal</div><div class="v" id="tGoal">$0</div></div>
-      <div class="pill"><div class="t">Saved (current + signed)</div><div class="v" id="tSaved">$0</div></div>
-      <div class="pill"><div class="t">Remaining</div><div class="v" id="tRemain">$0</div></div>
-    </section>
-  </main>
-
-  <nav class="tabs" role="navigation" aria-label="Bottom tabs">
-    <a href="/Spending-tracker/" data-tab="spending">
-      <svg viewBox="0 0 24 24"><path d="M3 7h18a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><path d="M1 11h22"/></svg>
-      <span>Spending</span>
-    </a>
-    <a href="/Spending-tracker/food/" data-tab="food">
-      <svg viewBox="0 0 24 24"><path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v7M14 3v18M19 3l-2 6 3 12"/></svg>
-      <span>Food</span>
-    </a>
-    <a href="/Spending-tracker/savings/" data-tab="savings" class="active">
-      <svg viewBox="0 0 24 24"><path d="M5 11a7 7 0 0 1 7-6h2a7 7 0 0 1 7 7v3a2 2 0 0 1-2 2h-2l-1 2H8l-1-2H5a2 2 0 0 1-2-2v-3l2-1Z"/><path d="M13 9h1"/></svg>
-      <span>Savings</span>
-    </a>
-  </nav>
+<nav class="tabs">
+  <a href="../">Spending</a>
+  <a href="../food/">Food</a>
+  <a href="./" class="active">Savings</a>
+</nav>
 
 <script>
-  const fmt = v => new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD'}).format(Number(v||0));
-  const today = () => new Date().toISOString().slice(0,10);
-
-  const KEY='savings.account.v3';
-  const state = JSON.parse(localStorage.getItem(KEY) || '{"goal":0,"current":0,"items":[]}');
-
-  const $=id=>document.getElementById(id);
-  const goal=$('goal'), current=$('current'), desc=$('desc'), amt=$('amt'), kind=$('kind'), rows=$('rows'), tGoal=$('tGoal'), tSaved=$('tSaved'), tRemain=$('tRemain');
-
-  function render(){
-    const signedTotal = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
-    const saved = Number(state.current||0) + signedTotal;
-    const remain = Number(state.goal||0) - saved;
-
-    rows.innerHTML = state.items.length
-      ? state.items.map((i,idx)=>{
-          const neg = Number(i.amount)<0;
-          const label = neg?'Withdraw':'Deposit';
-          const shown = fmt(Math.abs(i.amount));
-          return `<tr><td>${i.date}</td><td><span class="badge">${label}</span>${i.desc}</td>
-                  <td class="${neg?'neg':'pos'}">${neg?'-':''}${shown} <button class="btn small secondary" onclick="del(${idx})">✕</button></td></tr>`;
-        }).join('')
-      : `<tr><td colspan="3" class="muted">No transactions yet.</td></tr>`;
-
-    tGoal.textContent=fmt(state.goal);
-    tSaved.textContent=fmt(saved);
-    tRemain.textContent=fmt(remain);
-    tRemain.className='v '+(remain>=0?'ok':'warn');
-
-    goal.value=state.goal||''; current.value=state.current||'';
-    localStorage.setItem(KEY, JSON.stringify(state));
-  }
-
-  function add(){
-    const d=(desc.value||'').trim(), a=Number(amt.value||0);
-    if(!d || !(a>0)) return;
-    const sign = (kind.value==='withdraw') ? -1 : 1;
-    state.items.unshift({date:today(), desc:d, amount: sign*a});
-    desc.value=''; amt.value=''; kind.value='deposit'; render();
-  }
-function del(idx){
-  // Build a friendly confirmation message
-  const it  = state.items?.[idx] || {};
-  const txt = (it.desc || it.name || '').toString().trim();
-  const amt = (typeof it.amount === 'number') ? it.amount : it.i_amount;
-
-  const pretty = (typeof fmt === 'function' && (typeof amt === 'number'))
-    ? ` (${fmt(amt)})`
-    : '';
-
-  const label = txt ? `"${txt}"${pretty}` : 'this entry';
-
-  if (!confirm(`Delete ${label}?`)) return;
-
-  state.items.splice(idx, 1);
-  render();
+const C=new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD'});
+const KEY='savings_v2';
+const els={house:house,goal:goal,desc:desc,amount:amount,sub:sub,add:add,tbody:document.querySelector('#list tbody'),empty:empty,ts:t_saved,tg:t_goal_amt,tp:t_pct,bar:bar};
+let state=load()||{house:0,goalPct:20,items:[]};
+function load(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function fmt(n){return C.format(Number(n||0))}
+function today(){return new Date().toISOString().slice(0,10)}
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function totals(){
+  const saved=state.items.reduce((s,i)=>s+Number(i.amount||0),0);
+  const goalAmt=(Number(state.house||0)*Number(state.goalPct||0)/100)||0;
+  const pctHouse=(Number(state.house||0)? (saved/Number(state.house))*100:0);
+  return {saved,goalAmt,pctHouse};
 }
-
-  function setGoal(){state.goal=Number(goal.value||0);render();}
-  function setCurrent(){state.current=Number(current.value||0);render();}
-  function resetAll(){if(!confirm('Reset savings account?'))return;state.goal=0;state.current=0;state.items=[];render();}
-  function copySummary(){
-    const signed = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
-    const saved = Number(state.current||0)+signed;
-    const remain = Number(state.goal||0)-saved;
-    const lines=['Savings — Account & Goal',`Goal: ${fmt(state.goal)}`,`Current saved: ${fmt(state.current)}`,`Transactions (signed): ${fmt(signed)}`,`Saved (current + signed): ${fmt(saved)}`,`Remaining: ${fmt(remain)}`,'','Transactions:',...(state.items.length?state.items.map(i=>`- ${i.date} · ${(i.amount<0?'Withdraw':'Deposit')} · ${i.desc}: ${(i.amount<0?'-':'')}${fmt(Math.abs(i.amount))}`):['(none)'])].join('\n');
-    navigator.clipboard.writeText(lines).then(()=>alert('Summary copied.'));
-  }
-
-  window.del=del;
-  document.getElementById('add').addEventListener('click',add);
-  document.getElementById('reset').addEventListener('click',resetAll);
-  document.getElementById('copy').addEventListener('click',copySummary);
-  goal.addEventListener('change',setGoal); goal.addEventListener('keyup',e=>{if(e.key==='Enter')setGoal();});
-  current.addEventListener('change',setCurrent); current.addEventListener('keyup',e=>{if(e.key==='Enter')setCurrent();});
-  render();
+function render(){
+  els.house.value=state.house||'';
+  els.goal.value=state.goalPct||'';
+  // list
+  els.tbody.innerHTML='';
+  els.empty.style.display=state.items.length?'none':'block';
+  state.items.slice().sort((a,b)=>b.date.localeCompare(a.date)).forEach(i=>{
+    const tr=document.createElement('tr');
+    const idx=state.items.indexOf(i);
+    tr.innerHTML=`<td>${i.date}</td><td>${escapeHtml(i.desc||'')}</td><td>${fmt(i.amount)}</td><td><button data-del="${idx}" class="btn_secondary" style="padding:.35rem .6rem">Del</button></td>`;
+    els.tbody.appendChild(tr);
+  });
+  // totals
+  const t=totals();
+  els.ts.textContent=fmt(t.saved);
+  els.tg.textContent=fmt(t.goalAmt);
+  const pct=Math.max(0,Math.min(100,t.pctHouse));
+  els.tp.textContent=(pct.toFixed(2))+'%';
+  els.bar.style.width=pct+'%';
+}
+house.addEventListener('change',()=>{state.house=+Number(house.value||0).toFixed(2); save(); render();});
+goal.addEventListener('change',()=>{state.goalPct=+Number(goal.value||0).toFixed(2); save(); render();});
+add.addEventListener('click',()=>{
+  const d=desc.value.trim(); const v=Number(amount.value);
+  if(!d||!isFinite(v))return; const val=sub.checked? -Math.abs(v):Math.abs(v);
+  state.items.push({date:today(),desc:d,amount:+val.toFixed(2)});
+  desc.value=''; amount.value=''; sub.checked=false; save(); render();
+});
+document.querySelector('#list tbody').addEventListener('click',(e)=>{
+  const b=e.target.closest('[data-del]'); if(!b)return;
+  const idx=Number(b.getAttribute('data-del')); const it=state.items[idx]; if(!it)return;
+  if(!confirm(`Delete "${it.desc}" for ${fmt(it.amount)}?`))return;
+  state.items.splice(idx,1); save(); render();
+});
+render();
 </script>
-</body>
-</html>
+</body></html>
