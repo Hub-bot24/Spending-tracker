@@ -231,7 +231,24 @@
     state.items.unshift({date:today(), desc:d, amount: sign*a});
     desc.value=''; amt.value=''; kind.value='deposit'; render();
   }
-  function del(i){state.items.splice(i,1);render();}
+function del(idx){
+  // Build a friendly confirmation message
+  const it  = state.items?.[idx] || {};
+  const txt = (it.desc || it.name || '').toString().trim();
+  const amt = (typeof it.amount === 'number') ? it.amount : it.i_amount;
+
+  const pretty = (typeof fmt === 'function' && (typeof amt === 'number'))
+    ? ` (${fmt(amt)})`
+    : '';
+
+  const label = txt ? `"${txt}"${pretty}` : 'this entry';
+
+  if (!confirm(`Delete ${label}?`)) return;
+
+  state.items.splice(idx, 1);
+  render();
+}
+
   function setGoal(){state.goal=Number(goal.value||0);render();}
   function setCurrent(){state.current=Number(current.value||0);render();}
   function resetAll(){if(!confirm('Reset savings account?'))return;state.goal=0;state.current=0;state.items=[];render();}
