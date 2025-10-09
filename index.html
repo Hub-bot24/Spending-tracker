@@ -235,7 +235,24 @@
     state.items.unshift({date:today(), desc:d, amount:a});
     desc.value=''; amt.value=''; render();
   }
-  function del(idx){ state.items.splice(idx,1); render(); }
+ function del(idx){
+  // Build a friendly confirmation message
+  const it  = state.items?.[idx] || {};
+  const txt = (it.desc || it.name || '').toString().trim();
+  const amt = (typeof it.amount === 'number') ? it.amount : it.i_amount;
+
+  const pretty = (typeof fmt === 'function' && (typeof amt === 'number'))
+    ? ` (${fmt(amt)})`
+    : '';
+
+  const label = txt ? `"${txt}"${pretty}` : 'this entry';
+
+  if (!confirm(`Delete ${label}?`)) return;
+
+  state.items.splice(idx, 1);
+  render();
+}
+
   function setBudget(){ state.budget = Number(budget.value||0); render(); }
   function resetAll(){
     if(!confirm('Reset this month? This clears entries and budget.')) return;
