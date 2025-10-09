@@ -1,5 +1,5 @@
 // Cache-first SW that ignores ?query so /index.html?v=38 still matches the cache
-const VERSION = 'v38';
+const VERSION = 'v40';
 const ROOT    = '/Spending-tracker/';
 
 const ASSETS = [
