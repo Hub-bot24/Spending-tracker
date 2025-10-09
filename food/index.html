@@ -1,225 +1,230 @@
 <!doctype html>
 <html lang="en">
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Food — Monthly Tracker</title>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Food Money – Monthly Subtractor</title>
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" content="#111827">
+  <script>
+    // Register SW (relative to repo root)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('../sw.js').catch(console.error);
+    }
+  </script>
+  <style>
+    :root{--b:#111827;--g:#6b7280;--bg:#f9fafb;--bd:#e5e7eb;--accent:#111827}
+    *{box-sizing:border-box}
+    body{font-family:system-ui,apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:var(--bg);color:var(--b)}
+    .wrap{max-width:760px;margin:32px auto;padding:0 16px}
+    .card{background:#fff;border:1px solid var(--bd);border-radius:16px;padding:16px 16px 12px;box-shadow:0 1px 2px rgba(0,0,0,.05);margin:12px 0}
+    h1{font-size:clamp(20px,3.2vw,28px);margin:6px 0 4px;color:var(--b)}
+    .muted{color:var(--g)}
 
-<link rel="manifest" href="../manifest.webmanifest" />
-<meta name="theme-color" content="#0f172a" />
-<link rel="apple-touch-icon" href="../icons/icon-192.png" />
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('../sw.js').catch(console.error);
-  }
-</script>
-
-<!-- same styles as Spending (kept inline so each page is standalone) -->
-<style>
-  :root{--ink:#0f172a;--ink-2:#334155;--muted:#64748b;--line:#e5e7eb;--bg:#f8fafc;--card:#fff;--brand:#2563eb;--ok:#0f766e;--warn:#b91c1c}
-  *{box-sizing:border-box}html,body{margin:0}
-  body{font:400 16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
-  .appbar{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#0f172a 0%,#111827 100%);color:#fff}
-  .appbar .inner{max-width:900px;margin:0 auto;padding:14px 16px 12px}
-  .appbar h1{margin:0;font-size:20px;font-weight:700}
-  .appbar p{margin:4px 0 0;color:#cbd5e1;font-size:13px}
-  .wrap{max-width:900px;margin:16px auto 0;padding:0 16px 100px}
-  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 10px 20px rgba(2,8,23,.04);margin:12px 0}
-  label{display:block;margin:.35rem 0 .35rem;font-weight:600;color:#334155}
-  input{width:100%;padding:.7rem .8rem;border:1px solid var(--line);border-radius:12px;font-size:16px;background:#fff}
-  .row{display:grid;grid-template-columns:1.4fr 140px 118px;gap:10px;align-items:end}
-  .btn{background:#2563eb;color:#fff;border:0;border-radius:12px;padding:.7rem .95rem;font-weight:700;cursor:pointer}
-  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line)} .btn.small{padding:.45rem .65rem;border-radius:10px}
-  .right{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:10px}
-  table{width:100%;border-collapse:separate;border-spacing:0;margin-top:6px}
-  th,td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:left} th{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em}
-  td:last-child{text-align:right}
-  .pills{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
-  .pill{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px}
-  .pill .t{font:600 12px/1 var(--font);color:#64748b}.pill .v{margin-top:6px;font:800 20px/1 var(--font)}
-  .ok{color:#0f766e}.warn{color:#b91c1c}
-  .tabs{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.92);backdrop-filter:saturate(180%) blur(10px);border-top:1px solid var(--line);display:flex;gap:8px;padding:8px env(safe-area-inset-right) calc(8px + env(safe-area-inset-bottom)) env(safe-area-inset-left);z-index:1000}
-  .tabs a{flex:1;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;padding:10px 6px;border-radius:12px;color:#6b7280;text-decoration:none;font:600 12px/1.1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-  .tabs a.active{color:#0f172a;background:#f3f4f6} .tabs svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2}
-  body{padding-bottom:90px}
-</style>
-<!-- LIVE SHARING (Firebase + Firestore) -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-
-  // --- YOUR FIREBASE CONFIG (from the screenshot) ---
-  const firebaseConfig = {
-    apiKey: "AIzaSyDMpr0lp3yANfgQAlm0S653kBEyI00L4V0",
-    authDomain: "family-spending-tracker-5670c.firebaseapp.com",
-    projectId: "family-spending-tracker-5670c",
-    storageBucket: "family-spending-tracker-5670c.firebasestorage.app",
-    messagingSenderId: "354132991425",
-    appId: "1:354132991425:web:4f0c2e5519ae5b2ba0e43c",
-    measurementId: "G-RS2D1YQEY8"
-  };
-
-  // One shared code for the whole family (change if you like)
-  const paramFam = new URLSearchParams(location.search).get('fam');
-  const FAMILY = (paramFam || 'daniel-family').trim();
-
-  // Which page am I? (so each page saves to its own doc)
-  const PAGE = location.pathname.includes('/food/')    ? 'food'
-             : location.pathname.includes('/savings/') ? 'savings'
-             : 'spending';
-
-  // Init Firebase
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db   = getFirestore(app);
-
-  // Your pages already define "state" + "render()".
-  // We wrap render() so every UI change gets saved (debounced).
-  const _render = render;
-  let saveTimer = null;
-  function queueSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveCloud, 300); }
-  render = function(){ _render(); queueSave(); };
-
-  async function saveCloud(){
-    try{
-      const ref = doc(db, "families", FAMILY, "pages", PAGE);
-      await setDoc(ref, { ...state, updatedAt: serverTimestamp() }, { merge: true });
-    }catch(e){ console.error("Cloud save failed:", e); }
-  }
-
-  // Sign in anonymously and wire up first load + live updates
-  signInAnonymously(auth).catch(console.error);
-
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) return;
-    const ref = doc(db, "families", FAMILY, "pages", PAGE);
-
-    // First load from cloud
-    const snap = await getDoc(ref);
-    if (snap.exists()) {
-      const data = snap.data();
-      Object.keys(state).forEach(k => delete state[k]); // clear local
-      Object.assign(state, data);                       // apply cloud
-      _render();                                        // draw once (no save)
-    } else {
-      await setDoc(ref, { ...state, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    label{display:block;margin:.5rem 0 .25rem;font-weight:600;color:var(--b)}
+    input[type="text"], input[type="number"]{
+      width:100%;padding:.65rem .75rem;border:1px solid var(--bd);border-radius:12px;font-size:16px;
     }
 
-    // Live updates from other phones
-    onSnapshot(ref, (ss) => {
-      if (!ss.exists()) return;
-      const data = ss.data();
-      if (JSON.stringify(data) !== JSON.stringify(state)) {
-        Object.keys(state).forEach(k => delete state[k]);
-        Object.assign(state, data);
-        _render(); // draw without re-saving
-      }
-    });
-  });
-</script>
+    .row{display:grid;grid-template-columns:1fr 140px 110px;gap:10px;align-items:end}
+    .row .btn{grid-column:3}
+    .btn{
+      background:var(--accent);color:#fff;border:1px solid var(--accent);
+      border-radius:12px;padding:.65rem .9rem;font-weight:600;cursor:pointer
+    }
+    .btn_secondary{background:#fff;color:var(--b);border:1px solid var(--bd)}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
 
+    table{width:100%;border-collapse:separate;border-spacing:0;margin-top:8px}
+    th,td{padding:10px;border-bottom:1px solid var(--bd);text-align:left;font-size:15px}
+    td:last-child{text-align:right}
+    .totals{display:flex;gap:10px;flex-wrap:wrap}
+    .pill{flex:1;min-width:160px;border:1px solid var(--bd);border-radius:14px;background:#fff;padding:12px}
+
+    .tabs{
+      position:sticky;bottom:0;background:#fff;border-top:1px solid var(--bd);
+      display:flex;gap:8px;padding:10px 12px
+    }
+    .tabs a{flex:1;text-align:center;text-decoration:none;border:1px solid var(--bd);
+      border-radius:10px;padding:10px 0;color:var(--b);font-weight:600}
+    .tabs a.active{background:#111827;color:#fff;border-color:#111827}
+  </style>
+</head>
 <body>
-  <header class="appbar"><div class="inner">
-    <h1>Food</h1>
-    <p>Track your food budget separately from general spending.</p>
-  </div></header>
-
-  <main class="wrap">
-    <section class="card">
-      <label for="budget">Food budget (AUD)</label>
-      <input id="budget" type="number" step="0.01" min="0" placeholder="e.g. 600" />
-      <div class="right">
-        <button class="btn small secondary" id="reset">Reset</button>
-        <button class="btn small secondary" id="copy">Copy summary</button>
+  <div class="wrap">
+    <!-- Budget -->
+    <div class="card">
+      <h1>Food Money (Monthly)</h1>
+      <label for="budget">Monthly food money (AUD)</label>
+      <input id="budget" type="number" inputmode="decimal" placeholder="e.g. 600" />
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button id="reset" class="btn_secondary btn">Reset month</button>
+        <button id="copy"  class="btn_secondary btn">Copy summary</button>
       </div>
-    </section>
+    </div>
 
-    <section class="card">
+    <!-- Add entry -->
+    <div class="card">
       <div class="row">
         <div>
-          <label for="desc">Item</label>
-          <input id="desc" placeholder="e.g. Groceries / Lunch / Takeaway" />
+          <label for="desc">Entry</label>
+          <input id="desc" type="text" placeholder="e.g. Groceries" />
         </div>
         <div>
-          <label for="amt">Amount (AUD)</label>
-          <input id="amt" type="number" step="0.01" min="0" placeholder="e.g. 25.00" />
+          <label for="amount">Amount (AUD)</label>
+          <input id="amount" type="number" inputmode="decimal" placeholder="e.g. 45.50" />
         </div>
-        <button class="btn" id="add">Add</button>
+        <button id="add" class="btn">Add</button>
       </div>
 
-      <table>
-        <thead><tr><th>Date</th><th>Item</th><th>Amount</th></tr></thead>
-        <tbody id="rows"><tr><td colspan="3" class="muted">No entries yet.</td></tr></tbody>
+      <table id="list">
+        <thead>
+          <tr><th style="width:110px">Date</th><th>Entry</th><th style="width:120px">Amount</th><th style="width:62px"></th></tr>
+        </thead>
+        <tbody></tbody>
       </table>
-    </section>
 
-    <section class="pills">
-      <div class="pill"><div class="t">Budget</div><div class="v" id="tBudget">$0</div></div>
-      <div class="pill"><div class="t">Spent</div><div class="v" id="tSpent">$0</div></div>
-      <div class="pill"><div class="t">Remaining</div><div class="v" id="tRemain">$0</div></div>
-    </section>
-  </main>
+      <p class="muted" id="empty" style="margin:12px 0 0">No entries yet.</p>
+    </div>
 
-  <nav class="tabs" role="navigation" aria-label="Bottom tabs">
-    <a href="/Spending-tracker/" data-tab="spending">
-      <svg viewBox="0 0 24 24"><path d="M3 7h18a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><path d="M1 11h22"/></svg>
-      <span>Spending</span>
-    </a>
-    <a href="/Spending-tracker/food/" data-tab="food" class="active">
-      <svg viewBox="0 0 24 24"><path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v7M14 3v18M19 3l-2 6 3 12"/></svg>
-      <span>Food</span>
-    </a>
-    <a href="/Spending-tracker/savings/" data-tab="savings">
-      <svg viewBox="0 0 24 24"><path d="M5 11a7 7 0 0 1 7-6h2a7 7 0 0 1 7 7v3a2 2 0 0 1-2 2h-2l-1 2H8l-1-2H5a2 2 0 0 1-2-2v-3l2-1Z"/><path d="M13 9h1"/></svg>
-      <span>Savings</span>
-    </a>
+    <!-- Totals -->
+    <div class="card">
+      <div class="totals">
+        <div class="pill">
+          <div class="muted">Budget (month)</div>
+          <div id="t_budget">$0.00</div>
+        </div>
+        <div class="pill">
+          <div class="muted">Spent</div>
+          <div id="t_spent">$0.00</div>
+        </div>
+        <div class="pill">
+          <div class="muted">Remaining</div>
+          <div id="t_left">$0.00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="tabs">
+    <a href="../" id="tab-spend">Spending</a>
+    <a href="./" class="active">Food</a>
+    <a href="../savings/">Savings</a>
   </nav>
 
-<script>
-  const fmt = v => new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD'}).format(Number(v||0));
-  const today = () => new Date().toISOString().slice(0,10);
-  const KEY = 'food.monthly.v3';
-  const state = JSON.parse(localStorage.getItem(KEY) || '{"budget":0,"items":[]}');
+  <script>
+    const CURRENCY = new Intl.NumberFormat('en-AU', { style:'currency', currency:'AUD' });
+    const KEY = 'food_v1'; // separate from spending
 
-  const $=id=>document.getElementById(id);
-  const budget=$('budget'), rows=$('rows'), tB=$('tBudget'), tS=$('tSpent'), tR=$('tRemain'), desc=$('desc'), amt=$('amt');
+    const els = {
+      budget: document.getElementById('budget'),
+      desc: document.getElementById('desc'),
+      amount: document.getElementById('amount'),
+      add: document.getElementById('add'),
+      reset: document.getElementById('reset'),
+      copy: document.getElementById('copy'),
+      tbody: document.querySelector('#list tbody'),
+      empty: document.getElementById('empty'),
+      t_budget: document.getElementById('t_budget'),
+      t_spent: document.getElementById('t_spent'),
+      t_left: document.getElementById('t_left'),
+    };
 
-  function render(){
-    const spent = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
-    const remain = Number(state.budget||0)-spent;
-    rows.innerHTML = state.items.length?state.items.map((i,idx)=>`
-      <tr><td>${i.date}</td><td>${i.desc}</td>
-      <td>${fmt(i.amount)} <button class="btn small secondary" onclick="del(${idx})">✕</button></td></tr>`
-    ).join(''):`<tr><td colspan="3" class="muted">No entries yet.</td></tr>`;
-    tB.textContent=fmt(state.budget); tS.textContent=fmt(spent); tR.textContent=fmt(remain);
-    tR.className='v '+(remain>=0?'ok':'warn'); budget.value=state.budget||'';
-    localStorage.setItem(KEY,JSON.stringify(state));
-  }
-  function add(){const d=(desc.value||'').trim(),a=Number(amt.value||0);if(!d||!(a>0))return;state.items.unshift({date:today(),desc:d,amount:a});desc.value='';amt.value='';render();}
-function del(idx){
-  // Build a friendly confirmation message
-  const it  = state.items?.[idx] || {};
-  const txt = (it.desc || it.name || '').toString().trim();
-  const amt = (typeof it.amount === 'number') ? it.amount : it.i_amount;
+    // state
+    let state = load() || { budget: 0, items: [] };
 
-  const pretty = (typeof fmt === 'function' && (typeof amt === 'number'))
-    ? ` (${fmt(amt)})`
-    : '';
+    function load() {
+      try { return JSON.parse(localStorage.getItem(KEY)); } catch(e){ return null; }
+    }
+    function save() {
+      localStorage.setItem(KEY, JSON.stringify(state));
+    }
 
-  const label = txt ? `"${txt}"${pretty}` : 'this entry';
+    function fmt(n){ return CURRENCY.format(Number(n||0)); }
+    function today(){ return new Date().toISOString().slice(0,10); }
 
-  if (!confirm(`Delete ${label}?`)) return;
+    function render(){
+      // totals
+      const spent = state.items.reduce((s,i)=>s + Number(i.amount||0), 0);
+      els.t_budget.textContent = fmt(state.budget||0);
+      els.t_spent.textContent  = fmt(spent);
+      els.t_left.textContent   = fmt((Number(state.budget||0) - spent));
 
-  state.items.splice(idx, 1);
-  render();
-}
+      // budget field
+      els.budget.value = state.budget || '';
 
-  function setBudget(){state.budget=Number(budget.value||0);render();}
-  function resetAll(){if(!confirm('Reset food?'))return;state.budget=0;state.items=[];render();}
-  function copySummary(){const spent = state.items.reduce((s,i)=>s+Number(i.amount||0),0);const remain=Number(state.budget||0)-spent;const lines=['Food — Monthly Tracker',`Budget: ${fmt(state.budget)}`,`Spent:  ${fmt(spent)}`,`Remaining: ${fmt(remain)}`,'','Entries:',...(state.items.length?state.items.map(i=>`- ${i.date} · ${i.desc}: ${fmt(i.amount)}`):['(none)'])].join('\n');navigator.clipboard.writeText(lines).then(()=>alert('Summary copied.'));}
-  window.del=del;document.getElementById('add').addEventListener('click',add);document.getElementById('reset').addEventListener('click',resetAll);document.getElementById('copy').addEventListener('click',copySummary);budget.addEventListener('change',setBudget);budget.addEventListener('keyup',e=>{if(e.key==='Enter')setBudget();});render();
-</script>
+      // table
+      els.tbody.innerHTML = '';
+      els.empty.style.display = state.items.length ? 'none' : 'block';
+
+      state.items
+        .slice()
+        .sort((a,b)=> b.date.localeCompare(a.date))
+        .forEach((i,idx)=>{
+          const tr = document.createElement('tr');
+          const delIdx = state.items.indexOf(i); // stable index
+          tr.innerHTML = `
+            <td>${i.date}</td>
+            <td>${escapeHtml(i.desc||'')}</td>
+            <td>${fmt(i.amount)}</td>
+            <td><button data-del="${delIdx}" class="btn_secondary" style="padding:.35rem .6rem">Del</button></td>`;
+          els.tbody.appendChild(tr);
+        });
+    }
+
+    function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+    // events
+    els.add.addEventListener('click', ()=>{
+      const desc = els.desc.value.trim();
+      const amt  = Number(els.amount.value);
+      if(!desc || !isFinite(amt)) return;
+      state.items.push({ date: today(), desc, amount: +amt.toFixed(2) });
+      els.desc.value = ''; els.amount.value = '';
+      save(); render();
+    });
+
+    els.budget.addEventListener('change', ()=>{
+      const v = Number(els.budget.value);
+      state.budget = isFinite(v) ? +v.toFixed(2) : 0;
+      save(); render();
+    });
+
+    els.reset.addEventListener('click', ()=>{
+      if(!confirm('Reset this month? This clears entries and budget.')) return;
+      state = { budget: 0, items: [] };
+      save(); render();
+    });
+
+    els.copy.addEventListener('click', ()=>{
+      const spent = state.items.reduce((s,i)=>s + Number(i.amount||0), 0);
+      const left = (Number(state.budget||0) - spent);
+      const lines = [
+        'Food Money (Monthly)',
+        `Budget: ${fmt(state.budget||0)}`,
+        `Spent:  ${fmt(spent)}`,
+        `Remaining: ${fmt(left)}`,
+        '',
+        'Entries:',
+        ...state.items.map(i => `${i.date} – ${i.desc}: ${fmt(i.amount)}`)
+      ];
+      navigator.clipboard.writeText(lines.join('\n')).then(()=>alert('Summary copied.'));
+    });
+
+    // delete (with confirm)
+    els.tbody.addEventListener('click', (e)=>{
+      const btn = e.target.closest('[data-del]');
+      if(!btn) return;
+      const idx = Number(btn.getAttribute('data-del'));
+      const item = state.items[idx];
+      if(!item) return;
+      if(!confirm(`Delete "${item.desc}" for ${fmt(item.amount)}?`)) return;
+      state.items.splice(idx,1);
+      save(); render();
+    });
+
+    // init
+    render();
+  </script>
 </body>
 </html>
-
-
