@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Food – Monthly Subtractor</title>
+<title>Food – Tracker</title>
 
 <link rel="manifest" href="../manifest.webmanifest">
 <meta name="theme-color" content="#111827">
@@ -35,51 +35,63 @@
   .pill.ok{color:var(--ok)}
   .pill.bad{color:var(--warn)}
 
-  .tabs{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #eee;display:flex;gap:8px;padding:10px 12px;z-index:9999}
-  .tabs a{flex:1;text-align:center;text-decoration:none;border:1px solid #eee;border-radius:12px;padding:12px 0;color:#111827;font-weight:700;-webkit-tap-highlight-color:transparent}
+  .tabs{
+    position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #eee;
+    display:flex;gap:8px;padding:10px 12px;z-index:9999;
+  }
+  .tabs a{
+    flex:1;text-align:center;text-decoration:none;border:1px solid #eee;border-radius:12px;
+    padding:12px 0;color:#111827;font-weight:700;-webkit-tap-highlight-color:transparent;
+  }
   .tabs a.active{background:#111827;color:#fff;border-color:#111827}
 
-  .fab{position:fixed;right:16px;bottom:76px;z-index:10000;background:#111827;color:#fff;border:none;border-radius:28px;height:56px;min-width:56px;padding:0 18px;font-weight:800;font-size:16px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);cursor:pointer}
+  .fab{
+    position:fixed;right:16px;bottom:76px;z-index:10000;
+    background:#111827;color:#fff;border:none;border-radius:28px;
+    height:56px;min-width:56px;padding:0 18px;font-weight:800;font-size:16px;
+    display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);cursor:pointer;
+  }
   .fab span{font-size:22px;line-height:1}
 </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <h1>Food (Monthly)</h1>
-      <p class="muted">Track your monthly food spend. Use negative numbers for refunds/credits.</p>
+      <h1>Food</h1>
+      <p class="muted">Track food spending here (shared across devices).</p>
 
-      <label for="budget">Food budget (AUD)</label>
-      <input id="budget" inputmode="decimal" placeholder="e.g. 800" />
+      <label for="budget">Food budget (optional)</label>
+      <input id="budget" inputmode="decimal" placeholder="e.g. 400" />
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="btn" onclick="setBudget()">Save budget</button>
-        <button class="btn secondary" onclick="resetAll()">Reset month</button>
+        <button class="btn secondary" onclick="resetAll()">Reset</button>
         <button class="btn secondary" onclick="copySummary()">Copy summary</button>
       </div>
+      <p class="muted" id="syncStatus">Connecting…</p>
     </div>
 
     <div class="card">
       <div class="row">
         <div>
-          <label for="desc">Entry</label>
-          <input id="desc" placeholder="e.g. Supermarket" />
+          <label for="desc">Item</label>
+          <input id="desc" placeholder="e.g. Groceries" />
         </div>
         <div>
           <label for="amount">Amount (AUD)</label>
-          <input id="amount" inputmode="decimal" placeholder="e.g. 52.40 or -10" />
+          <input id="amount" inputmode="decimal" placeholder="e.g. 50.00" />
         </div>
-        <div class="full muted">Tip: negative values work (e.g., <code>-12.30</code>).</div>
+        <div class="full muted">Tip: use negative numbers for refunds.</div>
       </div>
 
       <table class="table" id="list">
-        <thead><tr><th>Date</th><th>Entry</th><th>Amount</th><th></th></tr></thead>
+        <thead><tr><th>Date</th><th>Item</th><th>Amount</th><th></th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
 
     <div class="card">
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-        <div><div class="muted">Budget (month)</div><div id="tBudget">$0</div></div>
+        <div><div class="muted">Budget</div><div id="tBudget">$0</div></div>
         <div><div class="muted">Spent</div><div id="tSpent">$0</div></div>
         <div><div class="muted">Remaining</div><div id="tRemain" class="pill">$0</div></div>
       </div>
@@ -94,64 +106,129 @@
     <a href="../savings/">Savings</a>
   </nav>
 
-<script>
-const KEY = 'food-v2';
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-let state = { budget:0, items:[] };
+<script>
+// same config as main page
+const firebaseConfig = {
+  apiKey: "AIzaSyDMr09Ip3yANfqGclmO56S3SkBEyI00L4V0",
+  authDomain: "family-spending-tracker-5670c.firebaseapp.com",
+  projectId: "family-spending-tracker-5670c",
+  storageBucket: "family-spending-tracker-5670c.firebasestorage.app",
+  messagingSenderId: "354132991425",
+  appId: "1:354132991425:web:cdfc02e5519ae5b2ba0e340",
+  measurementId: "G-RSDZ1QYEY8"
+};
+
+let db, docRef;
+let state = { budget: 0, items: [] };
+let initialLoaded = false;
+
+function initFirebase(){
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+  // separate doc for food
+  docRef = db.collection('spendingApps').doc('food');
+
+  document.getElementById('syncStatus').textContent = 'Syncing…';
+
+  docRef.onSnapshot(function(doc){
+    if(doc.exists){
+      state = doc.data();
+    } else {
+      docRef.set(state);
+    }
+    initialLoaded = true;
+    render();
+    document.getElementById('syncStatus').textContent = 'Synced';
+  }, function(err){
+    console.error(err);
+    document.getElementById('syncStatus').textContent =
+      'Sync error – using last loaded data';
+  });
+}
+
+function saveToCloud(){
+  if(!docRef) return;
+  docRef.set(state).catch(function(err){
+    console.error(err);
+    document.getElementById('syncStatus').textContent =
+      'Could not save – check connection';
+  });
+}
+
 function fmt(n){ return (n<0?'-':'') + '$' + Math.abs(n).toFixed(2); }
 
-function load(){
-  try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s) state=s; }catch(e){}
-  render(); document.getElementById('budget').value = state.budget || '';
+function setBudget(){
+  state.budget = Number(document.getElementById('budget').value || 0);
+  saveToCloud(); render();
 }
-function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
-function setBudget(){ state.budget = Number(budget.value||0); save(); render(); }
+
 function addEntry(){
   const desc = document.getElementById('desc').value.trim();
-  const amount = Number(document.getElementById('amount').value||0);
-  if(!desc){ alert('Please type an entry'); return; }
-  state.items.unshift({ id: Date.now(), date: new Date().toISOString().slice(0,10), desc, amount });
-  desc.value=''; amount.value='';
-  save(); render();
+  const amount = Number(document.getElementById('amount').value || 0);
+  if(!desc){ alert('Please type an item'); return; }
+  state.items.unshift({
+    id: Date.now(),
+    date: new Date().toISOString().slice(0,10),
+    desc, amount
+  });
+  document.getElementById('desc').value = '';
+  document.getElementById('amount').value = '';
+  saveToCloud(); render();
 }
-function delItem(id){
-  if(!confirm('Delete this entry?')) return;
-  state.items = state.items.filter(x=>x.id!==id); save(); render();
+
+function del(id){
+  if(!confirm('Delete this item?')) return;
+  state.items = state.items.filter(x => x.id !== id);
+  saveToCloud(); render();
 }
+
 function resetAll(){
-  if(!confirm('Reset this month? This clears entries and budget.')) return;
-  state={budget:0,items:[]}; save(); render();
+  if(!confirm('Reset all food entries for everyone?')) return;
+  state = {budget:0, items:[]};
+  saveToCloud(); render();
 }
+
 function copySummary(){
   const spent = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
   const remain = Number(state.budget||0) - spent;
   const lines = [
-    `Food (Monthly)`,
+    `Food summary`,
     `Budget: ${fmt(state.budget||0)}`,
     `Spent: ${fmt(spent)}`,
     `Remaining: ${fmt(remain)}`,
     ``,
     `Entries:`,
-    ...(state.items.map(i=>`${i.date}: ${i.desc} — ${fmt(i.amount)}`))
+    ...state.items.map(i => `${i.date}: ${i.desc} — ${fmt(i.amount)}`)
   ];
-  navigator.clipboard.writeText(lines.join('\n')).then(()=>alert('Summary copied.'));
+  navigator.clipboard.writeText(lines.join('\n')).then(() => alert('Summary copied.'));
 }
+
 function render(){
-  const tb=document.querySelector('#list tbody'); tb.innerHTML='';
-  state.items.forEach(i=>{
-    const tr=document.createElement('tr');
+  if(!initialLoaded) return;
+
+  const tb = document.querySelector('#list tbody'); tb.innerHTML = '';
+  state.items.forEach(i => {
+    const tr = document.createElement('tr');
     tr.innerHTML = `<td>${i.date}</td><td>${i.desc}</td><td>${fmt(i.amount)}</td>
-                    <td><button class="btn secondary" onclick="delItem(${i.id})">Delete</button></td>`;
+                    <td><button class="btn secondary" onclick="del(${i.id})">Delete</button></td>`;
     tb.appendChild(tr);
   });
+
   const spent = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
   const remain = Number(state.budget||0) - spent;
-  tBudget.textContent = fmt(Number(state.budget||0));
-  tSpent.textContent = fmt(spent);
-  tRemain.textContent = fmt(remain);
-  tRemain.className = 'pill ' + (remain>=0?'ok':'bad');
+  document.getElementById('budget').value = state.budget || '';
+  document.getElementById('tBudget').textContent = fmt(Number(state.budget||0));
+  document.getElementById('tSpent').textContent = fmt(spent);
+  const r = document.getElementById('tRemain');
+  r.textContent = fmt(remain);
+  r.className = 'pill ' + (remain>=0?'ok':'bad');
 }
-load();
+
+initFirebase();
 </script>
 </body>
 </html>
