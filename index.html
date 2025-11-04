@@ -69,6 +69,7 @@
         <button class="btn secondary" onclick="resetAll()">Reset month</button>
         <button class="btn secondary" onclick="copySummary()">Copy summary</button>
       </div>
+      <p class="muted" id="syncStatus">Connecting…</p>
     </div>
 
     <div class="card">
@@ -107,25 +108,78 @@
     <a href="savings/">Savings</a>
   </nav>
 
-<script>
-const KEY = 'spending-v2';
+<!-- Firebase SDKs (v8) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
+<script>
+// ---- Firebase config for your "Family Spending Tracker" project ----
+const firebaseConfig = {
+  apiKey: "AIzaSyDMr09Ip3yANfqGclmO56S3SkBEyI00L4V0",
+  authDomain: "family-spending-tracker-5670c.firebaseapp.com",
+  projectId: "family-spending-tracker-5670c",
+  storageBucket: "family-spending-tracker-5670c.firebasestorage.app",
+  messagingSenderId: "354132991425",
+  appId: "1:354132991425:web:cdfc02e5519ae5b2ba0e340",
+  measurementId: "G-RSDZ1QYEY8"
+};
+
+// ---- Firestore + app state ----
+let db, docRef;
 let state = {
   budget: 0,
   items: [] // {id, date, desc, amount}
 };
+let initialLoaded = false;
+
+function initFirebase() {
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    // One shared document for everyone
+    docRef = db.collection('spendingApps').doc('family');
+
+    document.getElementById('syncStatus').textContent = 'Syncing…';
+
+    // Real-time listener – updates all devices when data changes
+    docRef.onSnapshot(function(doc) {
+      if (doc.exists) {
+        state = doc.data();
+      } else {
+        // First time: create document with default state
+        docRef.set(state);
+      }
+      initialLoaded = true;
+      render();
+      document.getElementById('syncStatus').textContent = 'Synced';
+    }, function(error) {
+      console.error(error);
+      document.getElementById('syncStatus').textContent =
+        'Sync error – using last loaded data';
+    });
+  } catch (e) {
+    console.error(e);
+    alert('Firebase config error – check index.html');
+  }
+}
+
+function saveToCloud() {
+  if (!docRef) return;
+  docRef.set(state).catch(function(err){
+    console.error(err);
+    document.getElementById('syncStatus').textContent =
+      'Could not save – check connection';
+  });
+}
+
+// ---- UI logic (same behaviour as before, now calling saveToCloud) ----
 
 function fmt(n){ return (n<0?'-':'') + '$' + Math.abs(n).toFixed(2); }
 
-function load(){
-  try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s) state=s; }catch(e){}
-  render(); document.getElementById('budget').value = state.budget || '';
-}
-function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
-
 function setBudget(){
   state.budget = Number(document.getElementById('budget').value||0);
-  save(); render();
+  saveToCloud();
+  render();
 }
 
 function addEntry(){
@@ -136,19 +190,22 @@ function addEntry(){
   state.items.unshift({ id: Date.now(), date: new Date().toISOString().slice(0,10), desc, amount });
   document.getElementById('desc').value='';
   document.getElementById('amount').value='';
-  save(); render();
+  saveToCloud();
+  render();
 }
 
 function del(id){
   if(!confirm('Delete this entry?')) return;
   state.items = state.items.filter(x=>x.id!==id);
-  save(); render();
+  saveToCloud();
+  render();
 }
 
 function resetAll(){
-  if(!confirm('Reset this month? This clears entries and budget.')) return;
+  if(!confirm('Reset this month for EVERYONE?')) return;
   state = {budget:0, items:[]};
-  save(); render();
+  saveToCloud();
+  render();
 }
 
 function copySummary(){
@@ -167,7 +224,8 @@ function copySummary(){
 }
 
 function render(){
-  // table
+  if (!initialLoaded) return; // wait until Firestore sends first data
+
   const tb = document.querySelector('#list tbody'); tb.innerHTML='';
   state.items.forEach(i=>{
     const tr=document.createElement('tr');
@@ -175,9 +233,10 @@ function render(){
                     <td><button class="btn secondary" onclick="del(${i.id})">Delete</button></td>`;
     tb.appendChild(tr);
   });
-  // totals
+
   const spent = state.items.reduce((s,i)=>s+Number(i.amount||0),0);
   const remain = Number(state.budget||0) - spent;
+  document.getElementById('budget').value = state.budget || '';
   document.getElementById('tBudget').textContent = fmt(Number(state.budget||0));
   document.getElementById('tSpent').textContent = fmt(spent);
   const r = document.getElementById('tRemain');
@@ -185,7 +244,8 @@ function render(){
   r.className = 'pill ' + (remain>=0?'ok':'bad');
 }
 
-load();
+// Start everything
+initFirebase();
 </script>
 </body>
 </html>
