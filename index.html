@@ -210,10 +210,11 @@ function syncPushState(){
       deleted: false,
       updatedAt: updatedAt
     };
+
+    // Simple POST, no custom headers => no CORS preflight issues
     fetch(SYNC_URL, {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ rows:[row] })
+      body: JSON.stringify({ rows: [row] })
     }).then(() => {
       localStorage.setItem(LAST_SYNC_KEY, String(updatedAt));
     }).catch(e => console.warn('Sync push failed', e));
@@ -221,6 +222,7 @@ function syncPushState(){
     console.warn('Sync push failed', e);
   }
 }
+
 
 // >>> NEW: pull latest state from Google Sheet <<<
 function syncPullState(){
