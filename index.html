@@ -110,11 +110,6 @@
 <script>
 const KEY = 'spending-v2';
 
-// >>> NEW: sync config <<<
-const SYNC_URL = 'https://script.google.com/macros/s/AKfycbzB11Qa2pB3O505grKuGtjMDb7pV_RnEJL-mKQ09zRag0TapxOWLMb2Nr8wPM-v9FVJ/exec';
-
-const LAST_SYNC_KEY = 'hb_last_sync_master';
-
 let state = {
   budget: 0,
   items: [] // {id, date, desc, amount}
@@ -126,12 +121,7 @@ function load(){
   try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s) state=s; }catch(e){}
   render(); document.getElementById('budget').value = state.budget || '';
 }
-
-// >>> CHANGED: save now also pushes to the sheet <<<
-function save(){
-  localStorage.setItem(KEY, JSON.stringify(state));
-  syncPushState();
-}
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
 
 function setBudget(){
   state.budget = Number(document.getElementById('budget').value||0);
@@ -195,73 +185,7 @@ function render(){
   r.className = 'pill ' + (remain>=0?'ok':'bad');
 }
 
-// >>> NEW: push local state to Google Sheet <<<
-function syncPushState(){
-  if (!SYNC_URL) return;
-  try {
-    const stateCopy = JSON.parse(JSON.stringify(state));
-    const updatedAt = Date.now();
-    const row = {
-      id: 'master',
-      user: 'family',
-      category: '',
-      note: JSON.stringify(stateCopy),
-      amount: 0,
-      date: '',
-      deleted: false,
-      updatedAt: updatedAt
-    };
-
-    // Simple POST, no custom headers => no CORS preflight issues
-    fetch(SYNC_URL, {
-      method: 'POST',
-      body: JSON.stringify({ rows: [row] })
-    }).then(() => {
-      localStorage.setItem(LAST_SYNC_KEY, String(updatedAt));
-    }).catch(e => console.warn('Sync push failed', e));
-  } catch (e) {
-    console.warn('Sync push failed', e);
-  }
-}
-
-
-// >>> NEW: pull latest state from Google Sheet <<<
-function syncPullState(){
-  if (!SYNC_URL) return;
-  const since = Number(localStorage.getItem(LAST_SYNC_KEY) || 0);
-  fetch(`${SYNC_URL}?since=${since}`)
-    .then(res => res.json())
-    .then(data => {
-      if (!data.ok || !Array.isArray(data.rows) || data.rows.length === 0) return;
-      let latest = data.rows[0];
-      for (const r of data.rows){
-        if (Number(r.updatedAt || 0) > Number(latest.updatedAt || 0)){
-          latest = r;
-        }
-      }
-      if (latest.note){
-        try {
-          const remoteState = JSON.parse(latest.note);
-          if (remoteState && typeof remoteState === 'object'){
-            state = remoteState;
-            localStorage.setItem(KEY, JSON.stringify(state));
-            localStorage.setItem(LAST_SYNC_KEY, String(latest.updatedAt || Date.now()));
-            render();
-            document.getElementById('budget').value = state.budget || '';
-          }
-        } catch (e) {
-          console.warn('Failed to apply remote state', e);
-        }
-      }
-    })
-    .catch(e => console.warn('Sync pull failed', e));
-}
-
-// initial load + start polling for remote changes
 load();
-syncPullState();
-setInterval(syncPullState, 30000);
 </script>
 </body>
 </html>
-
